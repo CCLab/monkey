@@ -56,7 +56,7 @@ Requirements for tree data:
         var parentId = getParentId(id);
         
         if (!!parentId) {
-            assertNodeInTree(treeData, parentId, 'createTree');
+            assertNodeInTree(treeData, hierarchyColumn, parentId, 'createTree');
         }
         
         //var parentNode = getNode(treeData, parentId);
@@ -225,7 +225,7 @@ Requirements for tree data:
         }
     }
     
-    var assertNodeInTree = function(treeData, id, hierarchyColumn, msg) {
+    var assertNodeInTree = function(treeData, hierarchyColumn, id, msg) {
         if ( !getNode(treeData, hierarchyColumn, id) ) {
             throw 'assertNodeInTree' + msg;
         }

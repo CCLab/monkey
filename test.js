@@ -28,4 +28,9 @@ Testing monkey.
     console.log('someData = {id:' + someData['id'] + ', ' + someData['name'] + '}');
     
     var tree2 = monkey.createTree(rows, 'idef');
+    var someId2 = '1-3-2';
+    var someData2 = tree2.getNode(someId2);
+    console.log('someData2 = {idef:' + someData2['idef'] + ', name:' + someData2['name'] +
+                ', v_eu:' + someData2['v_eu'] + ', v_total:' + someData2['v_total'] +
+                ', v_nation' + someData2['v_nation'] + ', type:' + someData2['type']);
 })();

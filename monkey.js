@@ -20,7 +20,7 @@ Requirements for tree data:
         assertList(data, 'createTree');
         
         var treeData = {
-            'root': {'id': null, 'name': 'root', 'children': []}
+            'root': {hierarchyColumn: null, 'name': 'root', 'children': []}
         };
         var tree = {
             data: treeData,
@@ -28,7 +28,7 @@ Requirements for tree data:
                 return insertNode.call(tree, treeData, hierarchyColumn, node);
             },
             getNode: function(id) {
-                return getNode.call(tree, treeData, id);
+                return getNode.call(tree, treeData, hierarchyColumn, id);
             }
             //insertNode.call(tree, treeData, hierarchyColumn)
         };
@@ -60,23 +60,23 @@ Requirements for tree data:
         }
         
         //var parentNode = getNode(treeData, parentId);
-        var parentNode = getNode(treeData, parentId);
+        var parentNode = getNode(treeData, hierarchyColumn, parentId);
         newNode['children'] = [];
-        insertChild(parentNode, newNode);
+        insertChild(parentNode, newNode, hierarchyColumn);
     }
     
-    var insertChild = function(parent, child) {
+    var insertChild = function(parent, child, hierarchyColumn) {
         assertNode(parent);
-        var childId = child['id'];
+        var childId = child[hierarchyColumn];
         parent['children'].push(child);
         parent['children'].sort(function(el1, el2) {
-            var idNr1 = parseInt( lastIdElement(el1['id']) );
-            var idNr2 = parseInt( lastIdElement(el2['id']) );
+            var idNr1 = parseInt( lastIdElement(el1[hierarchyColumn]) );
+            var idNr2 = parseInt( lastIdElement(el2[hierarchyColumn]) );
             return idNr1 - idNr2;
         });
     }
     
-    var getNode = function(treeData, id) {
+    var getNode = function(treeData, hierarchyColumn, id) {
         //assertList(treeData, 'getNode');
         assertId(id, 'getNode');
         
@@ -88,7 +88,7 @@ Requirements for tree data:
         var actLevel;
         for (actLevel = 0; actLevel <= maxLevel; ++actLevel) {
             childId = getIdOnLevel(id, actLevel);
-            node = getChild(node, childId);
+            node = getChild(node, childId, hierarchyColumn);
             if (!node) {
                 return undefined;
             }
@@ -96,12 +96,12 @@ Requirements for tree data:
         return node;
     }
     
-    var getChild = function(node, childId) {
-        assertNode(node, 'id');
-        assertNonEmptyString(childId);
+    var getChild = function(node, childId, hierarchyColumn) {
+        assertNode(node, 'getChild');
+        assertNonEmptyString(childId, 'getChild');
         
         var childList = node['children'].filter(function(e) {
-            return e['id'] === childId;
+            return e[hierarchyColumn] === childId;
         });
         
         return (childList.length > 0) ? childList[0] : undefined;
@@ -225,8 +225,8 @@ Requirements for tree data:
         }
     }
     
-    var assertNodeInTree = function(treeData, id, msg) {
-        if ( !getNode(treeData, id) ) {
+    var assertNodeInTree = function(treeData, id, hierarchyColumn, msg) {
+        if ( !getNode(treeData, hierarchyColumn, id) ) {
             throw 'assertNodeInTree' + msg;
         }
     }

@@ -26,4 +26,6 @@ Testing monkey.
     
     var someData = tree.getNode(someId);
     console.log('someData = {id:' + someData['id'] + ', ' + someData['name'] + '}');
+    
+    var tree2 = monkey.createTree(rows, 'idef');
 })();

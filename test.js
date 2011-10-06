@@ -21,9 +21,9 @@ Testing monkey.
     
     var tree = monkey.createTree(listData, 'id');
     childrenList.forEach( function(el) {
-        tree.insertChild(el);
+        tree.insertNode(el);
     });
     
     var someData = tree.getNode(someId);
-    
+    console.log('someData = {id:' + someData['id'] + ', ' + someData['name'] + '}');
 })();

@@ -16,18 +16,25 @@ Requirements for tree data:
     
     
         
-    monkey.createTree = function(data, hierarchy_column) {
+    monkey.createTree = function(data, hierarchyColumn) {
         assertList(data, 'createTree');
         
         var treeData = {
             'root': {'id': null, 'name': 'root', 'children': []}
         };
         var tree = {
-            data: treeData
+            data: treeData,
+            insertNode: function(node) {
+                return insertNode.call(tree, treeData, hierarchyColumn, node);
+            },
+            getNode: function(id) {
+                return getNode.call(tree, treeData, id);
+            }
+            //insertNode.call(tree, treeData, hierarchyColumn)
         };
         
-        data.forEach(function (child) {
-            var id = child[hierarchy_column];
+        data.forEach(function (newNode) {
+            /*var id = child[hierarchyColumn];
             var parentId = getParentId(id);
             
             if (!!parentId) {
@@ -37,12 +44,26 @@ Requirements for tree data:
             //var parentNode = getNode(treeData, parentId);
             var parentNode = getNode(treeData, parentId);
             child['children'] = [];
-            insertChild(parentNode, child);
+            insertChild(parentNode, child);*/
+            insertNode(treeData, hierarchyColumn, newNode);
         });
         
-        return treeData;
+        return tree;
     }
     
+    var insertNode = function(treeData, hierarchyColumn, newNode) {
+        var id = newNode[hierarchyColumn];
+        var parentId = getParentId(id);
+        
+        if (!!parentId) {
+            assertNodeInTree(treeData, parentId, 'createTree');
+        }
+        
+        //var parentNode = getNode(treeData, parentId);
+        var parentNode = getNode(treeData, parentId);
+        newNode['children'] = [];
+        insertChild(parentNode, newNode);
+    }
     
     var insertChild = function(parent, child) {
         assertNode(parent);
@@ -166,9 +187,10 @@ Requirements for tree data:
         
         var i;
         var len = id.length;
-        for (i = 0; i < len && level >= 0; ++i) {
+        for (i = 0; i < len; ++i) {
             if (id[i] === '-') {
                 --level;
+                if (level < 0) break;
             }
         }
         return id.substring(0, i);        

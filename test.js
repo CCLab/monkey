@@ -19,7 +19,7 @@ Testing monkey.
     ];
     var someId = '1-0';
     
-    var tree = monkey.createTree(listData, 'idef');
+    var tree = monkey.createTree(listData, 'id');
     childrenList.forEach( function(el) {
         tree.insertChild(el);
     });

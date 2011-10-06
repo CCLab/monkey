@@ -10,9 +10,91 @@ Requirements for tree data:
 
 */
 
-(function() {
-    var __version = 0.01,
-        that = {};
+(function(glob) {
+    var __version = 0.01;
+    var monkey = {};
+    
+    
+        
+    monkey.createTree = function(data, hierarchy_column) {
+        assertList(data, 'createTree');
+        
+        var treeData = {
+            'root': {'id': null, 'name': 'root', 'children': []}
+        };
+        var tree = {
+            data: treeData
+        };
+        
+        data.forEach(function (child) {
+            var id = child[hierarchy_column];
+            var parentId = getParentId(id);
+            
+            if (!!parentId) {
+                assertNodeInTree(treeData, parentId, 'createTree');
+            }
+            
+            //var parentNode = getNode(treeData, parentId);
+            var parentNode = getNode(treeData, parentId);
+            child['children'] = [];
+            insertChild(parentNode, child);
+        });
+        
+        return treeData;
+    }
+    
+    
+    var insertChild = function(parent, child) {
+        assertNode(parent);
+        var childId = child['id'];
+        parent['children'].push(child);
+        parent['children'].sort(function(el1, el2) {
+            var idNr1 = parseInt( lastIdElement(el1['id']) );
+            var idNr2 = parseInt( lastIdElement(el2['id']) );
+            return idNr1 - idNr2;
+        });
+    }
+    
+    var getNode = function(treeData, id) {
+        //assertList(treeData, 'getNode');
+        assertId(id, 'getNode');
+        
+        var node = treeData['root'];
+        if (id === null) return node;
+        
+        var maxLevel = count(id, '-');
+        var childId;
+        var actLevel;
+        for (actLevel = 0; actLevel <= maxLevel; ++actLevel) {
+            childId = getIdOnLevel(id, actLevel);
+            node = getChild(node, childId);
+            if (!node) {
+                return undefined;
+            }
+        }
+        return node;
+    }
+    
+    var getChild = function(node, childId) {
+        assertNode(node, 'id');
+        assertNonEmptyString(childId);
+        
+        var childList = node['children'].filter(function(e) {
+            return e['id'] === childId;
+        });
+        
+        return (childList.length > 0) ? childList[0] : undefined;
+        
+        /*var i;
+        var children = node['children'];
+        var len = children.length;
+        for (i = 0; i < len; ++i) {
+            if (children[i]['id'] === childId) {
+                return children[i];
+            }
+        }
+        return undefined;*/
+    }
     
     // hierarchy traversing functions
     
@@ -41,29 +123,6 @@ Requirements for tree data:
     }
     
     var getSibling = function(node, sibling_nr) {
-        if
-    }
-    
-    var getMyNumber = function(node) {
-        var parent = getParent(node);
-        if (!parent) {
-            return undefined;
-        }
-        
-        var children = parent['children'],
-            children_count = parent['children'].length,
-            i;
-            
-        for (i = 0; i < children_count; ++i) {
-            if (node['item'] == parent['children']) {
-                return i;
-            }
-        }
-        
-    }
-    
-    var getChild = function(node, child_nr) {
-        
     }
     
     var getChildren = function(node) {
@@ -78,5 +137,90 @@ Requirements for tree data:
         return node['item'];
     }
     
-    return that;
-})();
+    ///////////////////////////////////////////////////////////////////////////
+    //                         helper functions                              //
+    ///////////////////////////////////////////////////////////////////////////
+    var count = function(str, letter) {
+        assertString(str, 'count');
+        
+        var counter = 0;
+        var i;
+        var len = str.length;
+        
+        for (i = 0; i < len; ++i) {
+            if (str[i] === letter) {
+                ++counter;
+            }
+        }
+        
+        return counter;
+    }
+    
+    var getParentId = function(id) {
+        var lastIndex = id.lastIndexOf('-');
+        return (lastIndex !== -1) ? id.substring(0, lastIndex) : null;
+    }
+    
+    var getIdOnLevel = function(id, level) {
+        assertNonEmptyString(id, 'getIdOnLevel');
+        
+        var i;
+        var len = id.length;
+        for (i = 0; i < len && level >= 0; ++i) {
+            if (id[i] === '-') {
+                --level;
+            }
+        }
+        return id.substring(0, i);        
+    }
+    
+    var lastIdElement = function(id) {
+        assertNonEmptyString(id);
+        
+        var lastPosition = id.lastIndexOf('-');
+        return (lastPosition !== -1) ? id.substring(lastPosition + 1) : id;
+    }
+    
+    
+    ///////////////////////////////////////////////////////////////////////////
+    //                              asserts                                  //
+    ///////////////////////////////////////////////////////////////////////////
+    var assertList = function(value, msg) {
+        if (value.constructor !== Array) {
+            throw 'assertList: ' + msg;
+        }
+    }
+    
+    var assertString = function(value, msg) {
+        if (value.constructor !== String && value !== '') {
+            throw 'assertString' + msg;
+        }
+    }
+    
+    var assertNonEmptyString = function(value, msg) {
+        if (value.constructor !== String && value !== '') {
+            throw 'assertNonEmptyString' + msg;
+        }
+    }
+    
+    var assertNodeInTree = function(treeData, id, msg) {
+        if ( !getNode(treeData, id) ) {
+            throw 'assertNodeInTree' + msg;
+        }
+    }
+    
+    var assertNode = function(node, id_column, msg) {
+        if ( !node.hasOwnProperty(id_column) &&
+             assertList(node['children'], msg + '->assertNode') ) {
+            throw 'assertNode(id_column=' + id_column + ')' + msg;
+        }
+    }
+    
+    var assertId = function(id, msg) {
+        if (id !== null) {
+            assertNonEmptyString(id, msg + '->assertId');
+        }
+    }
+    
+    glob.monkey = monkey;
+})(this);

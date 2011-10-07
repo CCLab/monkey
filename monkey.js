@@ -3,26 +3,29 @@
 Monkey is a very simple library used for traversing tree,
 like an agile monkey.
 
-Requirements for tree data:
--- tree nodes are objects
--- children nodes are in a list under 'children' parameter
--- data in node is in 'item' parameter
+Form of created tree:
+-- creates new root node without value
+-- all tree nodes are objects
+-- children nodes are in a list 'children' parameter
+-- data in node is in other parameters
 
 */
 
-(function(glob) {
+(function(global) {
     var __version = 0.01;
     var monkey = {};
     
     
-        
+    ///////////////////////////////////////////////////////////////////////////
+    //                           Tree creation                               //
+    ///////////////////////////////////////////////////////////////////////////
     monkey.createTree = function(data, hierarchyColumn) {
         assertList(data, 'createTree');
         
         var treeData = {
             'root': {hierarchyColumn: null, 'name': 'root', 'children': []}
         };
-        var tree = {
+        /*var tree = {
             data: treeData,
             insertNode: function(node) {
                 return insertNode.call(tree, treeData, hierarchyColumn, node);
@@ -30,21 +33,10 @@ Requirements for tree data:
             getNode: function(id) {
                 return getNode.call(tree, treeData, hierarchyColumn, id);
             }
-            //insertNode.call(tree, treeData, hierarchyColumn)
-        };
+        };*/
+        tree = createTreeObject(treeData, hierarchyColumn);
         
         data.forEach(function (newNode) {
-            /*var id = child[hierarchyColumn];
-            var parentId = getParentId(id);
-            
-            if (!!parentId) {
-                assertNodeInTree(treeData, parentId, 'createTree');
-            }
-            
-            //var parentNode = getNode(treeData, parentId);
-            var parentNode = getNode(treeData, parentId);
-            child['children'] = [];
-            insertChild(parentNode, child);*/
             insertNode(treeData, hierarchyColumn, newNode);
         });
         
@@ -59,7 +51,6 @@ Requirements for tree data:
             assertNodeInTree(treeData, hierarchyColumn, parentId, 'createTree');
         }
         
-        //var parentNode = getNode(treeData, parentId);
         var parentNode = getNode(treeData, hierarchyColumn, parentId);
         newNode['children'] = [];
         insertChild(parentNode, newNode, hierarchyColumn);
@@ -77,7 +68,6 @@ Requirements for tree data:
     }
     
     var getNode = function(treeData, hierarchyColumn, id) {
-        //assertList(treeData, 'getNode');
         assertId(id, 'getNode');
         
         var node = treeData['root'];
@@ -105,57 +95,169 @@ Requirements for tree data:
         });
         
         return (childList.length > 0) ? childList[0] : undefined;
-        
-        /*var i;
-        var children = node['children'];
-        var len = children.length;
-        for (i = 0; i < len; ++i) {
-            if (children[i]['id'] === childId) {
-                return children[i];
+    }
+    
+    var createTreeObject = function(treeData, hierarchyColumn) {
+        return {
+            data: treeData,
+            insertNode: function(node) {
+                return insertNode.call(tree, treeData, hierarchyColumn, node);
+            },
+            getNode: function(id) {
+                return getNode.call(tree, treeData, hierarchyColumn, id);
+            },
+            parent: function(id, nodeData) {
+                return parent.call(tree, treeData, hierarchyColumn, id, nodeData);
+            },
+            root: function(id) {
+                return root.call(tree, treeData, hierarchyColumn, id);
+            },
+            leftSibling: function(id) {
+                return leftSibling.call(tree, treeData, hierarchyColumn, id);
+            },
+            rightSibling: function(id) {
+                return rightSibling.call(tree, treeData, hierarchyColumn, id);
+            },
+            sibling: function(id, siblingNr) {
+                return sibling.call(tree, treeData, hierarchyColumn, id, siblingNr);
+            },
+            children: function(id) {
+                return children.call(tree, treeData, hierarchyColumn, id);
+            },
+            subtree: function(id) {
+                return subtree.call(tree, treeData, hierarchyColumn, id);
+            },
+            value: function(id) {
+                return value.call(tree, treeData, hierarchyColumn, id);
             }
-        }
-        return undefined;*/
+        };
     }
     
-    // hierarchy traversing functions
     
-    var getParent = function(node) {
-        return node['parent'];
-    }
-    
-    var getRoot = function(node) {
-        if (!getParent(node)) {
-            return node;
-        }
+    ///////////////////////////////////////////////////////////////////////////
+    //                          Tree traversal                               //
+    ///////////////////////////////////////////////////////////////////////////
+    // TODO
+    var parent = function(treeData, hierarchyColumn, id, nodeData) {
+        assertId(id, 'parent');
         
-        var lastNode = node;
-        while ( getParent(lastNode) ) {
-            lastNode = getParent(lastNode);
+        var parentId = getParentId(id);
+        if (!data) {
+            
+        }
+        return getNode(treeData, hierarchyColumn, id);
+    }
+    
+    var root = function(treeData, hierarchyColumn, id) {
+        asssertId(id, 'root');
+        
+        if ( isRootId(id) ) return treeData['root'];
+        
+        var lastNode = getNode(treeData, hierarchyColumn, id);
+        var lastId = id;
+        while ( !!parent(treeData, hierarchyColumn, lastId, lastNode) ) {
+            lastNode = parent(treeData, hierarchyColumn, id);
+            lastId = lastNode[hierarchyColumn];
         }
         
         return lastNode;
     }
     
-    var getLeftSibling = function(node) {
+    var leftSibling = function(treeData, hierarchyColumn, id) {
+        assertId(id, 'leftSibling');
+        if ( isRootId(id) ) return undefined;
+        
+        var siblingsNodes = children(treeData, hierarchyColumn, id);
+        var i;
+        var last = siblingsNodes.length - 1;
+        for (i = 1; i < last; ++i) {
+            if (siblingsNodes[i][hierarchyColumn] === id) {
+                return siblingsNodes[i - 1];
+            }
+        }
+        return undefined;
     }
     
-    var getRightSibling = function(node) {
-    
+    var rightSibling = function(treeData, hierarchyColumn, id) {
+        assertId(id, 'rightSibling');
+        if ( isRootId(id) ) return undefined;
+        
+        var siblingsNodes = children(treeData, hierarchyColumn, id);
+        var i;
+        var nextToLast = siblingsNodes.length - 2;
+        for (i = 0; i < nextToLast; ++i) {
+            if (siblingsNodes[i][hierarchyColumn] === id) {
+                return siblingsNodes[i + 1];
+            }
+        }
+        return undefined;
     }
     
-    var getSibling = function(node, sibling_nr) {
+    var sibling = function(treeData, hierarchyColumn, id, siblingNr) {
+        assertId(id, 'sibling');
+        if ( isRootId(id) ) return (siblingNr === 0) ? treeData['root'] : undefined;
+        
+        var siblingsNodes = children(treeData, hierarchyColumn, id);
+        if (siblingNr < 0 || siblingsNodes.length <= siblingNr) return undefined;
+        
+        return siblingsNodes[siblingNr];
     }
     
-    var getChildren = function(node) {
+    var children = function(treeData, hierarchyColumn, id) {
+        assertId(id, 'children');
+        var node = getNode(treeData, hierarchyColumn, id);
         return node['children'];
     }
     
-    var getSubtree = function(node) {
-        
+    // it is the same as getNode, because if you have a node, you have subtree,
+    // because the node knows about his children and so on
+    var subtree = function(treeData, hierarchyColumn, id) {
+        assertId(id, 'subtree');
+        return getNode(treeData, hierarchyColumn, id);
     }
     
-    var getItem = function(node) {
-        return node['item'];
+    // warning: if node contains objects, only their references will be copied
+    var value = function(treeData, hierarchyColumn, id) {
+        assertId(id, 'value');
+        var node = getNode(treeData, hierarchyColumn, id);
+        if (!node) return undefined;
+        var valueCopy = {};
+        var key;
+        for (key in node) {
+            if ( node.hasOwnProperty(key) && key !== 'children') {
+                valueCopy[key] = node[key];
+            }
+        }
+        return valueCopy;
+    }
+    
+    var next = function(treeData, hierarchyColumn, id) {
+        assertId(id, 'next');
+        
+        var childrenNodes = children(treeData, hierarchyColumn, id);
+        if (childrenNodes.length) return childrenNodes[0];
+        
+        var rightNode = rightSibling(treeData, hierarchyColumn, id);
+        if ( !!rightNode ) return rightNode;
+        
+        var parentId = getParentId(id);
+        while ( !parentId ) {
+            rightNode = rightSibling(treeData, hierarchyColumn, parentId);
+            if ( !!rightNode ) return rightNode;
+            
+            parentId = getParentId(parentId);
+        }
+        return undefined;
+    }
+    
+    var iterate = function(treeData, hierarchyColumn, fun, id) {
+        if (!id) {
+            assertId(id, 'iterate');
+            
+            
+        }
+        var root = treeData['root'];
+        // TODO
     }
     
     ///////////////////////////////////////////////////////////////////////////
@@ -203,6 +305,9 @@ Requirements for tree data:
         return (lastPosition !== -1) ? id.substring(lastPosition + 1) : id;
     }
     
+    var isRootId = function(id) {
+        return id === null;
+    }
     
     ///////////////////////////////////////////////////////////////////////////
     //                              asserts                                  //
@@ -244,5 +349,6 @@ Requirements for tree data:
         }
     }
     
-    glob.monkey = monkey;
+    
+    global.monkey = monkey;
 })(this);

@@ -13,6 +13,9 @@ Testing monkey.
                     {'id': '1-1', 'name': 'salad'}
     ];
     
+    var print = function(x){
+        document.write(x);
+    };
     
     var childrenList = [{'id': '0-1-0', 'name': 'lobo'},
                         {'id': '0-1-1', 'name': 'champion'}
@@ -33,4 +36,18 @@ Testing monkey.
     console.log('someData2 = {idef:' + someData2['idef'] + ', name:' + someData2['name'] +
                 ', v_eu:' + someData2['v_eu'] + ', v_total:' + someData2['v_total'] +
                 ', v_nation' + someData2['v_nation'] + ', type:' + someData2['type']);
+    
+    
+    var count = 0;
+    tree2.iterate(function(node) { document.write(node['idef'] + '<hr>'); ++count;});
+    document.write('count = ' + count);
+    
+    var treeMaped = tree2.map(function(node){ node['type'] = node['type'] + node['type']; return node;});
+    treeMaped.iterate(function(node) { document.write(node['idef'] + '<hr>'); ++count;});
+    print('tree2 count = ' + tree2.countSubtree() + '<hr>');
+    print('treeMaped count = ' + treeMaped.countSubtree() + '<hr>');
+    print('tree2 count 1-1 = ' + tree2.countSubtree('1-1') + '<hr>');
+    print('treeMaped count 1-1 = ' + treeMaped.countSubtree('1-1') + '<hr>');
+    print('tree2 level-count 1-1 = ' + tree2.countLevel('1-1') + '<hr>');
+    print('treeMaped level-count 1-1 = ' + treeMaped.countLevel('1-1') + '<hr>');
 })();

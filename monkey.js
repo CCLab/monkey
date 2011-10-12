@@ -22,20 +22,8 @@ Form of created tree:
     monkey.createTree = function(data, hierarchyColumn) {
         assertList(data, 'createTree');
         
-        var treeData = {
-            'root': {hierarchyColumn: null, 'name': 'root', 'children': []}
-        };
-        /*var tree = {
-            data: treeData,
-            insertNode: function(node) {
-                return insertNode.call(tree, treeData, hierarchyColumn, node);
-            },
-            getNode: function(id) {
-                return getNode.call(tree, treeData, hierarchyColumn, id);
-            }
-        };*/
+        var treeData = createTreeData(hierarchyColumn);
         tree = createTreeObject(treeData, hierarchyColumn);
-        
         data.forEach(function (newNode) {
             insertNode(treeData, hierarchyColumn, newNode);
         });
@@ -97,39 +85,33 @@ Form of created tree:
         return (childList.length > 0) ? childList[0] : undefined;
     }
     
+    var createTreeData = function(hierarchyColumn) {
+        var root = {};
+        root[hierarchyColumn] = null;
+        root['name'] = 'root';
+        root['children'] = [];
+        return { 'root': root };
+    }
+    
     var createTreeObject = function(treeData, hierarchyColumn) {
         return {
             data: treeData,
-            insertNode: function(node) {
-                return insertNode.call(tree, treeData, hierarchyColumn, node);
-            },
-            getNode: function(id) {
-                return getNode.call(tree, treeData, hierarchyColumn, id);
-            },
-            parent: function(id, nodeData) {
-                return parent.call(tree, treeData, hierarchyColumn, id, nodeData);
-            },
-            root: function(id) {
-                return root.call(tree, treeData, hierarchyColumn, id);
-            },
-            leftSibling: function(id) {
-                return leftSibling.call(tree, treeData, hierarchyColumn, id);
-            },
-            rightSibling: function(id) {
-                return rightSibling.call(tree, treeData, hierarchyColumn, id);
-            },
-            sibling: function(id, siblingNr) {
-                return sibling.call(tree, treeData, hierarchyColumn, id, siblingNr);
-            },
-            children: function(id) {
-                return children.call(tree, treeData, hierarchyColumn, id);
-            },
-            subtree: function(id) {
-                return subtree.call(tree, treeData, hierarchyColumn, id);
-            },
-            value: function(id) {
-                return value.call(tree, treeData, hierarchyColumn, id);
-            }
+            insertNode: function(node) { return insertNode.call(tree, treeData, hierarchyColumn, node); },
+            getNode: function(id) { return getNode.call(tree, treeData, hierarchyColumn, id); },
+            parent: function(id, nodeData) { return parent.call(tree, treeData, hierarchyColumn, id, nodeData); },
+            root: function(id) { return root.call(tree, treeData, hierarchyColumn, id); },
+            leftSibling: function(id) { return leftSibling.call(tree, treeData, hierarchyColumn, id); },
+            rightSibling: function(id) { return rightSibling.call(tree, treeData, hierarchyColumn, id); },
+            sibling: function(id, siblingNr) { return sibling.call(tree, treeData, hierarchyColumn, id, siblingNr); },
+            children: function(id) { return children.call(tree, treeData, hierarchyColumn, id); },
+            subtree: function(id) { return subtree.call(tree, treeData, hierarchyColumn, id); },
+            value: function(id) { return value.call(tree, treeData, hierarchyColumn, id); },
+            next: function(id) { return next.call(tree, treeData, hierarchyColumn, id); },
+            iterate: function(fun) { return iterate.call(tree, treeData, hierarchyColumn, fun); },
+            forEach: function(fun) { return _forEach.call(tree, treeData, hierarchyColumn, fun); },
+            map: function(fun) { return _map.call(tree, treeData, hierarchyColumn, fun); },
+            countSubtree: function(rootId) { return countSubtree.call(tree, treeData, hierarchyColumn, rootId); },
+            countLevel: function(parentId) { return countLevel.call(tree, treeData, hierarchyColumn, parentId); }
         };
     }
     
@@ -167,9 +149,10 @@ Form of created tree:
         assertId(id, 'leftSibling');
         if ( isRootId(id) ) return undefined;
         
-        var siblingsNodes = children(treeData, hierarchyColumn, id);
+        var parentId = getParentId(id);
+        var siblingsNodes = children(treeData, hierarchyColumn, parentId);
         var i;
-        var last = siblingsNodes.length - 1;
+        var last = siblingsNodes.length;
         for (i = 1; i < last; ++i) {
             if (siblingsNodes[i][hierarchyColumn] === id) {
                 return siblingsNodes[i - 1];
@@ -182,9 +165,10 @@ Form of created tree:
         assertId(id, 'rightSibling');
         if ( isRootId(id) ) return undefined;
         
-        var siblingsNodes = children(treeData, hierarchyColumn, id);
+        var parentId = getParentId(id);
+        var siblingsNodes = children(treeData, hierarchyColumn, parentId);
         var i;
-        var nextToLast = siblingsNodes.length - 2;
+        var nextToLast = siblingsNodes.length - 1;
         for (i = 0; i < nextToLast; ++i) {
             if (siblingsNodes[i][hierarchyColumn] === id) {
                 return siblingsNodes[i + 1];
@@ -241,7 +225,7 @@ Form of created tree:
         if ( !!rightNode ) return rightNode;
         
         var parentId = getParentId(id);
-        while ( !parentId ) {
+        while ( !!parentId ) {
             rightNode = rightSibling(treeData, hierarchyColumn, parentId);
             if ( !!rightNode ) return rightNode;
             
@@ -250,14 +234,55 @@ Form of created tree:
         return undefined;
     }
     
-    var iterate = function(treeData, hierarchyColumn, fun, id) {
-        if (!id) {
-            assertId(id, 'iterate');
-            
-            
-        }
+    var iterate = function(treeData, hierarchyColumn, fun) {
         var root = treeData['root'];
-        // TODO
+        var nextNode = next(treeData, hierarchyColumn, root[hierarchyColumn]);
+        while (!!nextNode) {
+            fun(nextNode);
+            nextNode = next(treeData, hierarchyColumn, nextNode[hierarchyColumn]);
+        }
+    }
+    
+    var _forEach = function(treeData, hierarchyColumn, fun) {
+        iterate(treeData, hierarchyColumn, fun);
+    }
+    
+    var _map = function(treeData, hierarchyColumn, fun) {
+        var root = treeData['root'];
+        var nextNode = next(treeData, hierarchyColumn, root[hierarchyColumn]);
+        var newTreeData = createTreeData(hierarchyColumn);
+        var copiedNode;
+        var modifiedNode;
+        
+        while (!!nextNode) {
+            // TODO: should jQuery stay or make our own extend function? - create our own - faster - children
+            //copiedNode = $.extend(true, {}, nextNode);
+            copiedNode = copyNode(nextNode);
+            modifiedNode = fun(copiedNode);
+            insertNode(newTreeData, hierarchyColumn, modifiedNode);
+            nextNode = next(treeData, hierarchyColumn, nextNode[hierarchyColumn]);
+        }
+        return createTreeObject(newTreeData, hierarchyColumn);
+    }
+    
+    var countSubtree = function(treeData, hierarchyColumn, rootId) {
+        var rootId = rootId || null;
+        assertId(rootId, 'countSubtree');
+        
+        var counter = (!!rootId) ? 1 : 0;
+        
+        var nextNode = next(treeData, hierarchyColumn, rootId);
+        while (!!nextNode && isAncestor(rootId, nextNode[hierarchyColumn])) {
+            counter += 1;
+            nextNode = next(treeData, hierarchyColumn, nextNode[hierarchyColumn]);
+        }
+        return counter;
+    }
+    
+    var countLevel = function(treeData, hierarchyColumn, parentId) {
+        assertId(parentId, 'countLevel');
+        
+        return children(treeData, hierarchyColumn, parentId).length;
     }
     
     ///////////////////////////////////////////////////////////////////////////
@@ -305,8 +330,45 @@ Form of created tree:
         return (lastPosition !== -1) ? id.substring(lastPosition + 1) : id;
     }
     
+    var isAncestor = function(ancestorId, childId) {
+        assertId(ancestorId);
+        assertId(childId);
+    
+        if (ancestorId === null) {
+            return true;
+        }
+        if (ancestorId.length >= childId.length) return false;        
+        if (count(ancestorId, '-') >= count(childId, '-')) return false;
+        return (ancestorId === childId.substring(0, ancestorId.length));
+    }
+    
     var isRootId = function(id) {
         return id === null;
+    }
+    
+    var copyNode = function(node) {
+        var copyAttr = function(newobj, obj, attr) {
+            var toCopy = obj[attr];
+            if (typeof toCopy === 'Object') {
+                
+            } else if (typeof toCopy === 'Array') {
+            
+            } else {
+                // neither Object, nor Array, can be copied in usual way
+                newobj[attr] = obj[attr];
+            }
+        };
+        
+        var property;
+        var copyNode = {};
+        for (property in node) {
+            if (node.hasOwnProperty(property) && property !== 'children') {
+                copyAttr(copyNode, node, property);
+            }
+        }
+        copyNode['children'] = [];
+        
+        return copyNode;
     }
     
     ///////////////////////////////////////////////////////////////////////////
@@ -336,10 +398,10 @@ Form of created tree:
         }
     }
     
-    var assertNode = function(node, id_column, msg) {
-        if ( !node.hasOwnProperty(id_column) &&
+    var assertNode = function(node, idColumn, msg) {
+        if ( !node.hasOwnProperty(idColumn) &&
              assertList(node['children'], msg + '->assertNode') ) {
-            throw 'assertNode(id_column=' + id_column + ')' + msg;
+            throw 'assertNode(idColumn=' + idColumn + ')' + msg;
         }
     }
     

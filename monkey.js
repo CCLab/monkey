@@ -15,17 +15,19 @@ Form of created tree:
     var __version = 0.01;
     var monkey = {};
     
-    
     ///////////////////////////////////////////////////////////////////////////
     //                           Tree creation                               //
     ///////////////////////////////////////////////////////////////////////////
     monkey.createTree = function(data, hierarchyColumn) {
         assertList(data, 'createTree');
-        
+        //var tree = inherits( that );
+        //tree['hierarchyColumn'] = hierarchyColumn;
+        //tree['treeData'] = createTreeData(hierarchyColumn);
+         
         var treeData = createTreeData(hierarchyColumn);
         tree = createTreeObject(treeData, hierarchyColumn);
         data.forEach(function (newNode) {
-            insertNode(treeData, hierarchyColumn, newNode);
+            tree.insertNode(newNode);
         });
         
         return tree;
@@ -87,9 +89,11 @@ Form of created tree:
     
     var createTreeData = function(hierarchyColumn) {
         var root = {};
+        
         root[hierarchyColumn] = null;
         root['name'] = 'root';
         root['children'] = [];
+        
         return { 'root': root };
     }
     
@@ -137,6 +141,7 @@ Form of created tree:
         
         var lastNode = getNode(treeData, hierarchyColumn, id);
         var lastId = id;
+        
         while ( !!parent(treeData, hierarchyColumn, lastId, lastNode) ) {
             lastNode = parent(treeData, hierarchyColumn, id);
             lastId = lastNode[hierarchyColumn];

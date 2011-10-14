@@ -1,6 +1,6 @@
 MONKEY
 ======
-A small JavaScript library for traversing tree-like data structures developed mainly by Bartosz Stalewski, Centrum Cyfrowe for Raw Salad project. Logo from OpenClipArt, by Martouf.
+A small JavaScript library for traversing tree-like data structures developed mainly by Bartosz Stalewski, Centrum Cyfrowe for Raw Salad project.
 
 LICENSE
 =======

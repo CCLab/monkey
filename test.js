@@ -23,9 +23,11 @@ Testing monkey.
     var someId = '1-0';
     
     var tree = monkey.createTree(listData, 'id');
-    childrenList.forEach( function(el) {
+    /*childrenList.forEach( function(el) {
         tree.insertNode(el);
-    });
+    });*/
+    tree.insertNode(childrenList[0])
+        .insertNode(childrenList[1]);
     
     var someData = tree.getNode(someId);
     console.log('someData = {id:' + someData['id'] + ', ' + someData['name'] + '}');
@@ -50,4 +52,6 @@ Testing monkey.
     print('treeMaped count 1-1 = ' + treeMaped.countSubtree('1-1') + '<hr>');
     print('tree2 level-count 1-1 = ' + tree2.countLevel('1-1') + '<hr>');
     print('treeMaped level-count 1-1 = ' + treeMaped.countLevel('1-1') + '<hr>');
+    
+    var list = tree2.toList();
 })();

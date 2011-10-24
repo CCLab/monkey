@@ -1,5 +1,5 @@
 CreationTest = TestCase("CreattionTest");
-GetNodeTest = TestCase("GetNodeTest");
+BasicFunctionsTest = TestCase("GetNodeTest");
 
 CreationTest.prototype.testEmptyCreation = function() {
     var emptyData = [ ];
@@ -69,12 +69,48 @@ CreationTest.prototype.testInsertion = function() {
     assertEquals(2, tree['treeData']['root']['children']);
 };
 
-GetNodeTest.prototype.testInsertion = function() {
+BasicFunctionsTest.prototype.testRoot = function() {
     var simpleData = [
         {'id': '0', 'name': 'fruit'},
         {'id': '1', 'name': 'vegetable'},
     ];
     var tree = monkey.createTree(simpleData, 'id');
     
-    assertEquals(2, tree['treeData']['root']['children']);
+    assertEquals(tree.root()['id'], null);
+    assertUndefined(tree.root()['parent']);
+    assertArray(tree.root()['children']);
+    assertEquals(tree.root()['children'].length, 2);
+    
+    //assertException(callback, error);
+};
+
+BasicFunctionsTest.prototype.testGet = function() {
+    var simpleData = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '1', 'name': 'vegetable'},
+    ];
+    var tree = monkey.createTree(simpleData, 'id');
+    var node = ;
+    
+    assertEquals('0', tree.getNode('0')['id']);
+    assertEquals('1', tree.getNode('1')['id']);
+    assertNull(tree.getNode(tree['treeData']['root']));
+    assertUndefined(tree.getNode('1-0'));
+    assertUndefined(tree.getNode('2'));
+    assertUndefined(tree.getNode('1-0-3'));
+    
+    //assertException(callback, error);
+};
+
+BasicFunctionsTest.prototype.testGetId = function() {
+    var simpleData = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '1', 'name': 'vegetable'},
+    ];
+    var tree = monkey.createTree(simpleData, 'id');
+    
+    assertEquals(tree.nodeId(tree.getNode('0')), '0');
+    assertEquals(tree.nodeId(tree.getNode('1')), '0');
+    
+    assertEquals(tree.nodeId(tree.getNode(null)), null);
 };

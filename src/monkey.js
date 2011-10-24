@@ -38,6 +38,7 @@ Monkey version with parent attribute in nodes.
         var newTree;
         
         assertList(data, 'createTree');
+        assertString(idColumn, 'createTree');
         
         newTree = baseTree.spawnTree();
         newTree['treeData'] = createTreeData(idColumn);

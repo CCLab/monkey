@@ -23,6 +23,7 @@ Testing monkey.
     var someId = '1-0';
     
     var tree = monkey.createTree(listData, 'id');
+    console.log(tree.getNode(tree['treeData']['root']['id']));
     /*childrenList.forEach( function(el) {
         tree.insertNode(el);
     });*/

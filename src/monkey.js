@@ -63,10 +63,22 @@ Monkey version with parent attribute in nodes.
         var moveNodes = function(tree, sourceNode, destNode, idColumn) {
             var nodesToMove = [];
             var i;
+            var level;
+            var levelId;
+            var childNode;
+            
+            level = count(destNode[idColumn], '-');
+
             for (i = 0; i < sourceNode['children'].length; ++i) {
-                if (tree.isAncestor(destNode, sourceNode['children'][i])) {
+                childNode = sourceNode['children'][i];
+                levelId = getIdOnLevel(childNode[idColumn], level);
+                if (levelId === destNode[idColumn]) {
+                    childNode['parent'] = destNode;
                     nodesToMove.push(i);
                 }
+                //if (tree.isAncestor(destNode, sourceNode['children'][i])) {
+                //    nodesToMove.push(i);
+                //}
             }
             
             for (i = nodesToMove.length - 1; i >= 0 ; --i) {
@@ -105,22 +117,19 @@ Monkey version with parent attribute in nodes.
         var childNodes;
         var node;
         
-        if (isIdType(elem)) {
-            assertId(elem, 'removeNode');
-        }
+        isIdType(elem) ? assertId(elem, 'removeNode') : assertNodeInTree(this, this.nodeId(elem), 'removeNode');
         assertRemoveType(type, 'baseTree.remove');
         
-        parentNode = this.parentNode(elem);
-        if (!parentNode) return false;
-        //if (this.isRoot(elem)) return false;
+        parentNode = this.parent(elem);
+        if (!parentNode) return this;
         
-        node = isIdType(elem) ? this.getNode(elem) : node;
+        node = isIdType(elem) ? this.getNode(elem) : elem;
         
         type === 'node' ? removeNode(parentNode, node, this['idColumn']) :
                           removeSubtree(parentNode, node, this['idColumn']);
         
         childNodes = this.children(parentNode);
-        //sortNodes(childNodes, this['idColumn']);
+        sortNodes(childNodes, this['idColumn']);
         
         return this;
     };
@@ -144,24 +153,16 @@ Monkey version with parent attribute in nodes.
     
     // Finds node with specified id and returns it. If such a node
     // is not in the tree, undefined will be returned.
-    baseTree.getNode = function(id) {        
+    baseTree.getNode = function(id) {    
         var node;
-        var maxLevel;
-        var childId;
-        var actLevel;
         
         assertId(id, 'getNode');
         
         node = this['treeData']['root'];
         if (id === null) return node;
-        
-        maxLevel = count(id, '-');
-        for (actLevel = 0; actLevel <= maxLevel; ++actLevel) {
-            childId = getIdOnLevel(id, actLevel);
-            node = getChild(node, childId, this['idColumn']);
-            if (!node) {
-                return undefined;
-            }
+
+        while (!!node && this.nodeId(node) !== id) {
+            node = getChild(node, id, this['idColumn']);
         }
         
         return node;
@@ -204,7 +205,12 @@ Monkey version with parent attribute in nodes.
         assertNode(ancestorNode, this['idColumn'], 'isAncestor');
         assertNode(childNode, this['idColumn'], 'isAncestor');
         
-        if (this.isRoot(ancestorNode)) return !this.isRoot(childNode);
+        if (this.isRoot(ancestorNode)) {
+            return !this.isRoot(childNode);
+        }
+        else if (this.isRoot(childNode)) {
+            return false;
+        }
         
         parentNode = this.parent(childNode);
         while (!this.isRoot(parentNode)) {
@@ -228,7 +234,7 @@ Monkey version with parent attribute in nodes.
         
         if (this.isRoot(elem)) return undefined;
         
-        id = isIdType(elem) ? id : this.nodeId(elem);
+        id = isIdType(elem) ? elem : this.nodeId(elem);
         parentNode = this.parent(elem);
         siblingsNodes = this.children(parentNode);
         last = siblingsNodes.length;
@@ -254,7 +260,7 @@ Monkey version with parent attribute in nodes.
         
         if ( this.isRoot(elem) ) return undefined;
         
-        id = isIdType(elem) ? id : this.nodeId(elem);
+        id = isIdType(elem) ? elem : this.nodeId(elem);
         parentNode = this.parent(elem);
         siblingsNodes = this.children(parentNode);
         nextToLast = siblingsNodes.length - 1;
@@ -274,10 +280,11 @@ Monkey version with parent attribute in nodes.
         var siblingsNodes;
         
         isIdType(elem) ? assertId(elem, 'sibling') : assertNodeInTree(this, this.nodeId(elem), 'sibling');
+        assertNumber(siblingNr, 'sibling');
         
         if ( this.isRoot(elem) ) return (siblingNr === 0) ? this.root() : undefined;
         
-        siblingsNodes = this.children(elem);
+        siblingsNodes = this.children(this.parent(elem));
         
         return (0 <= siblingNr && siblingNr < siblingsNodes.length) ? siblingsNodes[siblingNr] : undefined;
     };
@@ -290,18 +297,16 @@ Monkey version with parent attribute in nodes.
         
         node = isIdType(elem) ? this.getNode(elem) : elem;
         
-        return node['children'];
+        return (!!node) ? node['children'] : [];
     };
     
     // Return subtree which root is node specified by elem(node or its id).
-    // TODO: new tree creation maybe
     baseTree.subtree = function(elem) {
         isIdType(elem) ? assertId(elem, 'subtree') : assertNodeInTree(this, this.nodeId(elem), 'subtree');
         
         return isIdType(elem) ? this.getNode(elem) : elem;
     };
     
-    // warning: if node contains objects, only their references will be copied
     // Returns value of node specified by elem(node or its id).
     baseTree.value = function(elem) {
         var valueCopy;
@@ -337,6 +342,8 @@ Monkey version with parent attribute in nodes.
         rightSiblingNode = this.rightSibling(elem);
         if ( !!rightSiblingNode ) return rightSiblingNode;
         
+        if ( this.isRoot(elem) ) return undefined;
+        
         ancestorNode = this.parent(elem);
         while ( !this.isRoot(ancestorNode) ) {
             rightSiblingNode = this.rightSibling(ancestorNode);
@@ -351,9 +358,11 @@ Monkey version with parent attribute in nodes.
     // one argument: actual node. Returns the tree.
     baseTree.iterate = function(fun) {
         var nextNode = this.next(this.root());
+        var copiedNode;
         
         while (!!nextNode) {
-            fun(nextNode);
+            copiedNode = this.value(nextNode);
+            fun(copiedNode);
             nextNode = this.next(nextNode);
         }
         
@@ -398,7 +407,9 @@ Monkey version with parent attribute in nodes.
         
         isIdType(elem) ? assertId(elem, 'countSubtree') : assertNodeInTree(this, this.nodeId(elem), 'countSubtree');
         
-        subtreeRoot = isIdType(elem) ? this.getNode(elem) : elem;        
+        subtreeRoot = isIdType(elem) ? this.getNode(elem) : elem;
+        if (!subtreeRoot) return 0;
+        
         counter = this.isRoot(subtreeRoot) ? 0 : 1;
         nextNode = this.next(subtreeRoot);
         
@@ -413,13 +424,16 @@ Monkey version with parent attribute in nodes.
     // Returns number of nodes on level of elem(node or its id).
     baseTree.countLevel = function(elem) {
         var siblings;
+        var parentNode;
         
         isIdType(elem) ? assertId(elem, 'countLevel') :
                          assertNodeInTree(this, this.nodeId(elem), 'countLevel');
 
         if (this.isRoot(elem)) return 0;
         
-        siblings = this.children(this.parent(elem));
+        parentNode = this.parent(elem);
+        if (!parentNode) return 0;
+        siblings = this.children(parentNode);
         
         return siblings.length;
     };
@@ -430,9 +444,10 @@ Monkey version with parent attribute in nodes.
     };
     
     // Copies tree and returns copied instance.
-    // TODO
     baseTree.copy = function(tree) {
-        
+        return this.map(function(node) {
+            return node;
+        });
     };
     
     // Copies nodes' values(no hierarchy information) from this tree to
@@ -489,7 +504,11 @@ Monkey version with parent attribute in nodes.
         for (i = 0; i < childNodes.length; ++i) {
             if (id === childNodes[i][idColumn]) {
                 if (type === 'node') {
+                    childNodes[i]['children'].forEach(function(e) {
+                        e['parent'] = parentNode;
+                    });
                     childNodes = childNodes.concat(childNodes[i]['children']);
+                    parentNode['children'] = childNodes;
                 }
                 childNodes.splice(i, 1);
                 break;
@@ -518,8 +537,15 @@ Monkey version with parent attribute in nodes.
         assertNonEmptyString(childId, 'getChild');
         
         childrenList = node['children'].filter(function(e) {
-            return e[idColumn] === childId;
+            var level = count(e[idColumn], '-');
+            var levelId = getIdOnLevel(childId, level);
+            return e[idColumn] === levelId;
         });
+        
+        
+        /*childrenList = node['children'].filter(function(e) {
+            return e[idColumn] === childId;
+        });*/
         
         return (childrenList.length > 0) ? childrenList[0] : undefined;
     };
@@ -569,7 +595,8 @@ Monkey version with parent attribute in nodes.
         return (lastIndex !== -1) ? id.substring(0, lastIndex) : null;
     };
     
-    // TODO: think if it should be used
+    // Returns id on specified level(returns id cut off in place when
+    // separator number level+1 starts, separator is "-")
     var getIdOnLevel = function(id, level) {
         var i;
         var len;
@@ -588,17 +615,12 @@ Monkey version with parent attribute in nodes.
     };
     
     // Returns copy of a node without children collection and parent node.
-    // TODO
     var copyNode = function(node) {
         var property;
         var copyNode;
         var copyAttr = function(newobj, obj, attr) {
             var toCopy = obj[attr];
-            if (typeof toCopy === 'Object') {
-                
-            } else if (typeof toCopy === 'Array') {
-            
-            } else {
+            if (typeof toCopy !== 'Object' && typeof toCopy !== 'Array') {
                 // neither Object, nor Array, can be copied in usual way
                 newobj[attr] = obj[attr];
             }
@@ -606,7 +628,8 @@ Monkey version with parent attribute in nodes.
         
         copyNode = {};
         for (property in node) {
-            if (node.hasOwnProperty(property) && property !== 'children' && property !== 'parent') {
+            // parent and children properties will not copied(look at copyAttr)
+            if (node.hasOwnProperty(property)) {
                 copyAttr(copyNode, node, property);
             }
         }
@@ -691,6 +714,12 @@ Monkey version with parent attribute in nodes.
         }
     };
     
+    var assertNumber = function(number, msg) {
+        if (number.constructor != Number) {
+            throw 'assertNumber(number=' + number + '): ' + msg;
+        }
+    };
+    
     var assertNodeInTree = function(tree, id, msg) {
         if ( !tree.getNode(id) ) {
             throw 'assertNodeInTree(id=' + id + '): ' + msg;
@@ -711,7 +740,7 @@ Monkey version with parent attribute in nodes.
     };
     
     var assertRemoveType = function(type, msg) {
-        if (type !== 'node' || type !== 'subtree') {
+        if (type !== 'node' && type !== 'subtree') {
             throw 'assertRemoveType(type=' + type + ') ' + msg;
         }
     };

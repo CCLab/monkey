@@ -45,12 +45,16 @@ CreationTest.prototype.testNotEmptyCreation = function() {
         {'id': '1', 'name': 'vegetable'},
     ];
     var tree = monkey.createTree(listData, 'id');
+    var firstNode = {'id': '0', 'name': 'fruit', 'parent': tree['treeData']['root'], 'children': []};
+    var secondNode = {'id': '1', 'name': 'vegetable', 'parent': tree['treeData']['root'], 'children': []};
     
     // test if values are properly inserted in the tree and their
     // attributes are not changed
-    assertEquals(2, tree['treeData']['root']['children'].length);
-    assertEquals('fruit', tree['treeData']['root']['children']['0']['name']);
-    assertEquals('vegetable', tree['treeData']['root']['children']['1']['name']);
+    assertEquals([firstNode, secondNode], tree['treeData']['root']['children']);
+    
+    // check if list data is not changed after tree creation
+    assertEquals({'id': '0', 'name': 'fruit'}, listData[0]);
+    assertEquals({'id': '1', 'name': 'vegetable'}, listData[1]);
 };
 
 CreationTest.prototype.testId = function() {
@@ -73,15 +77,19 @@ CreationTest.prototype.testId = function() {
     
     var tree1 = monkey.createTree(listDataId, 'id');
     var tree2 = monkey.createTree(listDataIdef, 'idef');
+    var tree3 = monkey.createTree(listDataId);
     
     // test if id value is saved in correct property
     assertEquals('id', tree1['idColumn']);
     assertEquals('idef', tree2['idColumn']);
+    
+    // test if default id value is the same as expected
+    assertEquals('id', tree3['idColumn']);
 };
 
 CreationTest.prototype.testErrors = function() {
     var wrongData = "data";
-    var wrongId = 0;
+    var wrongId = 1;
     var goodData = [
         {'id': '0', 'name': 'fruit'},
         {'id': '1', 'name': 'vegetable'},
@@ -190,6 +198,10 @@ BasicFunctionsTest.prototype.testValue = function() {
     
     // check if function works for id argument and node argument
     assertEquals(simpleDataCopy[0], tree.value('0'));
+    
+    // check if changing value does not affect tree
+    tree.value('0')['name'] = 'notfruit';
+    assertEquals(simpleDataCopy[0], tree.value(tree.getNode('0')));
     
     // test reaction for bad argument: bad node
     assertException(function() {

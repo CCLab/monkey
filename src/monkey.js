@@ -31,11 +31,12 @@ Monkey version with parent attribute in nodes.
     //                           TREE CREATION                               //
     ///////////////////////////////////////////////////////////////////////////
     
-    // Creates a new tree and copies data in it. Uses idColumn to
-    // define hierarchy.
+    // Creates a new tree and copies data in it. Initial data is not changed.
+    // Uses idColumn to define hierarchy.
     // Returns new tree.
     monkey.createTree = function(data, idColumn) {
         var newTree;
+        var idColumn = idColumn || 'id';
         
         assertList(data, 'createTree');
         assertString(idColumn, 'createTree');
@@ -76,9 +77,6 @@ Monkey version with parent attribute in nodes.
                     childNode['parent'] = destNode;
                     nodesToMove.push(i);
                 }
-                //if (tree.isAncestor(destNode, sourceNode['children'][i])) {
-                //    nodesToMove.push(i);
-                //}
             }
             
             for (i = nodesToMove.length - 1; i >= 0 ; --i) {
@@ -639,6 +637,41 @@ Monkey version with parent attribute in nodes.
         return copyNode;
     };
     
+    // Returns deep copy of value.
+    // if copyAll is set to true, then also children and parent attributes
+    // will be copied, default is false.
+    var deepCopy = function(value, copyAll) {
+        var property;
+        var objectCopy;
+        var arrayCopy;
+        var copyAll = copyAll || false;
+        
+        if (value === undefined || value === null)
+            return value;
+        else if (value.constructor !== Object && value.constructor !== Array) {
+            return value;
+        }
+        else if (value.constructor === Object) {
+            objectCopy = {};
+            for (property in value) {
+                if (value.hasOwnProperty(property)) {
+                    if (!copyAll && (property === 'children' || property === 'parent'))
+                        continue;
+                        
+                    objectCopy[property] = deepCopy(value[property]);
+                }
+            }
+            return objectCopy;
+        }
+        else {
+            arrayCopy = [];
+            value.forEach(function(e) {
+                arrayCopy.push(deepCopy(e));
+            });
+            return arrayCopy;
+        }
+    };
+    
     // Returns true if elem can be id, otherwise false.
     var isIdType = function(elem) {
         return elem === null || elem.constructor === String;
@@ -648,7 +681,7 @@ Monkey version with parent attribute in nodes.
     var valueToNode = function(value, parentNode) {
         var node;
         
-        node = value;
+        node = deepCopy(value, true);
         node['parent'] = parentNode;
         node['children'] = [];
         
@@ -657,7 +690,8 @@ Monkey version with parent attribute in nodes.
     
     // Returns value of node, does not contain children collection and parent node.
     var nodeToValue = function(node) {
-        var value = copyNode(node);
+        //var value = copyNode(node);
+        var value = deepCopy(node);
         
         delete value['children'];
         delete value['parent'];

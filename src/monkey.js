@@ -17,7 +17,7 @@ Monkey version with parent attribute in nodes.
 */
 
 (function(global) {
-    var __version = 0.01;
+    var __version = 1.0;
     var monkey = {};
     var baseTree = {};
     

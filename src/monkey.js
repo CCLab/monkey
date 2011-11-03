@@ -62,32 +62,6 @@ Monkey version with parent attribute in nodes.
     // then removed node is replaced with the new node.
     // Returns tree after insertion.
     baseTree.insertNode = function(value) {
-        /*var moveNodes = function(tree, sourceNode, destNode, idColumn) {
-            var nodesToMove = [];
-            var i;
-            var level;
-            var levelId;
-            var childNode;
-            
-            level = count(destNode[idColumn], '-');
-
-            for (i = 0; i < sourceNode['children'].length; ++i) {
-                childNode = sourceNode['children'][i];
-                levelId = getIdOnLevel(childNode[idColumn], level);
-                if (levelId === destNode[idColumn]) {
-                    childNode['parent'] = destNode;
-                    nodesToMove.push(i);
-                }
-            }
-            
-            for (i = nodesToMove.length - 1; i >= 0 ; --i) {
-                insertChild(destNode, sourceNode['children'][nodesToMove[i]], idColumn);
-                sourceNode['children'].splice(i, 1);
-            }
-            
-            sortNodes(sourceNode['children'], idColumn);
-            sortNodes(destNode['children'], idColumn);
-        };*/
         var replaceNode = function(oldNode, newNode) {
             var i;
             var parentNode;
@@ -114,19 +88,13 @@ Monkey version with parent attribute in nodes.
         
         parentId = getParentId(id);
         parentNode = this.getNode(parentId);
-        if (!parentNode) return this;
-        /*while (!parentNode) {
-            parentId = getParentId(parentId);
-            parentNode = this.getNode(parentId);
-        }*/
-        
+        if (!parentNode) return this;        
         
         newNode = valueToNode(value, parentNode);
         
         if (this.isNodeRemoved(id)) {
             replaceNode(this.getNode(id, false), newNode);
         } else {        
-            //moveNodes(this, parentNode, newNode, this['idColumn']);
             insertChild(parentNode, newNode, this['idColumn']);
         }
         
@@ -150,9 +118,6 @@ Monkey version with parent attribute in nodes.
         
         type === 'node' ? removeNode(parentNode, node, this['idColumn']) :
                           removeSubtree(parentNode, node, this['idColumn']);
-        
-        //childNodes = this.children(parentNode);
-        //sortNodes(childNodes, this['idColumn']);
         
         return this;
     };
@@ -364,7 +329,6 @@ Monkey version with parent attribute in nodes.
         } else {
             return undefined;
         }
-        //return (0 <= siblingNr && siblingNr < siblingsNodes.length) ? siblingsNodes[siblingNr] : undefined;
     };
     
     // Returns children nodes of a node specified by elem(node or its id).
@@ -451,14 +415,10 @@ Monkey version with parent attribute in nodes.
         
         isIdType(elem) ? assertId(elem, 'value') : assertNodeInTree(this, this.nodeId(elem), false, 'value');
         
-        valueCopy = {};
         node = isIdType(elem) ? this.getNode(elem) : elem;
         
         if (!node) return undefined;
-        
-        //valueCopy = copyNode(node);
-        //delete valueCopy['children'];
-        //delete valueCopy['parent'];
+
         valueCopy = deepCopy(node, false);
         
         return valueCopy;
@@ -491,26 +451,6 @@ Monkey version with parent attribute in nodes.
             
             return undefined;
         };
-        /*var childNodes;
-        var rightSiblingNode;
-        var ancestorNode;
-        
-        isIdType(elem) ? assertId(elem, 'next') : assertNodeInTree(this, this.nodeId(elem), false, 'next');
-        
-        childNodes = this.children(elem);
-        if (childNodes.length) return childNodes[0];
-        
-        rightSiblingNode = this.rightSibling(elem);
-        if ( !!rightSiblingNode ) return rightSiblingNode;
-        
-        if ( this.isRoot(elem) ) return undefined;
-        
-        ancestorNode = this.parent(elem);
-        while ( !this.isRoot(ancestorNode) ) {
-            rightSiblingNode = this.rightSibling(ancestorNode);
-            if ( !!rightSiblingNode ) return rightSiblingNode;
-            ancestorNode = this.parent(ancestorNode);
-        }*/
         var nextNode;
         var ignoreRemoved = (ignoreRemoved === undefined) ? true : ignoreRemoved;
         
@@ -559,7 +499,6 @@ Monkey version with parent attribute in nodes.
         copiedTree['idColumn'] = this['idColumn'];
         
         while (!!nextNode) {
-            //copiedNode = copyNode(nextNode);
             copiedNode = deepCopy(nextNode, true);
             modifiedNode = fun(copiedNode);
             copiedTree.insertNode(modifiedNode);
@@ -738,11 +677,6 @@ Monkey version with parent attribute in nodes.
             return e[idColumn] === levelId;
         });
         
-        
-        /*childrenList = node['children'].filter(function(e) {
-            return e[idColumn] === childId;
-        });*/
-        
         return (childrenList.length > 0) ? childrenList[0] : undefined;
     };
     
@@ -888,13 +822,7 @@ Monkey version with parent attribute in nodes.
     
     // Returns value of node, does not contain children collection and parent node.
     var nodeToValue = function(node) {
-        //var value = copyNode(node);
-        var value = deepCopy(node, true);
-        
-        delete value['children'];
-        delete value['parent'];
-        
-        return value;
+        return deepCopy(node, true);
     };
     
     // Sorts nodes by their ids, that are kept in idColumn attribute in each node.

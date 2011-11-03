@@ -88,15 +88,17 @@ Monkey version with parent attribute in nodes.
             sortNodes(sourceNode['children'], idColumn);
             sortNodes(destNode['children'], idColumn);
         };*/
-        var replaceNode = function(tree, oldNode, newNode, idColumn) {
+        var replaceNode = function(oldNode, newNode) {
             var i;
             var parentNode;
             
-            newNode['parent'] = oldNode['parent'];
             parentNode = oldNode['parent'];
+            newNode['parent'] = parentNode;
+            newNode['children'] = oldNode['children'];
             for (i = 0; i < parentNode['children'].length; ++i) {
                 if (parentNode['children'][i] === oldNode) {
                     parentNode['children'][i] = newNode;
+                    break;
                 }
             }
             
@@ -122,11 +124,11 @@ Monkey version with parent attribute in nodes.
         newNode = valueToNode(value, parentNode);
         
         if (this.isNodeRemoved(id)) {
-            replaceNode(newNode, this.getNode(id, false));
+            replaceNode(this.getNode(id, false), newNode);
+        } else {        
+            //moveNodes(this, parentNode, newNode, this['idColumn']);
+            insertChild(parentNode, newNode, this['idColumn']);
         }
-        
-        //moveNodes(this, parentNode, newNode, this['idColumn']);
-        insertChild(parentNode, newNode, this['idColumn']);
         
         return this;
     };
@@ -237,10 +239,14 @@ Monkey version with parent attribute in nodes.
     
     // Returns true if node is marked to be removed, otherwise false
     baseTree.isNodeRemoved = function(elem) {
+        var node;
+        
         isIdType(elem) ? assertId(elem, 'isNodeRemoved') :
                          assertNode(elem, this['idColumn'], 'isNodeRemoved');
         
-        return !!elem['removed'];
+        node = isIdType(elem) ? this.getNode(elem, false) : elem;
+        
+        return (!!node) ? !!node['removed'] : false;
     };
     
     // Checks if ancestorNode is a ancestor of childNode.
@@ -351,9 +357,9 @@ Monkey version with parent attribute in nodes.
         
         if (0 <= siblingNr && siblingNr < siblingsNodes.length) {
             if (copy) {
-                return siblingsNodes[siblingNr];
-            } else {
                 return deepCopy(siblingsNodes[siblingNr]);
+            } else {
+                return siblingsNodes[siblingNr];
             }
         } else {
             return undefined;
@@ -506,13 +512,13 @@ Monkey version with parent attribute in nodes.
             ancestorNode = this.parent(ancestorNode);
         }*/
         var nextNode;
-        var ignoreRemoved  (ignoreRemoved === undefined) ? true : ignoreRemoved;
+        var ignoreRemoved = (ignoreRemoved === undefined) ? true : ignoreRemoved;
         
         isIdType(elem) ? assertId(elem, 'next') : assertNodeInTree(this, this.nodeId(elem), false, 'next');
         
         nextNode = getNextNode(this, elem);
         while (ignoreRemoved && !!nextNode && this.isNodeRemoved(nextNode)) {
-            nextNode = getNextNode(this, elem);
+            nextNode = getNextNode(this, nextNode);
         }
         
         return nextNode;

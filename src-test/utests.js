@@ -9,7 +9,7 @@ BasicFunctionsTest = TestCase("BasicFunctionsTest");
 // Functions tested: parent(), children(), leftSibling(), rightSibling(), sibling(), isAncestor()
 TreeTraversingTest = TestCase("TreeTraversingTest");
 
-// Functions tested: insertNode
+// Functions tested: insertNode(), removeNode(), removeSubtree(), remove(), isNodeRemoved()
 ModificationTest = TestCase("ModificationTest");
 
 // Functions tested: next(), iterate(), forEach(), map(), toList()
@@ -906,19 +906,10 @@ IterationTest.prototype.testToList = function() {
         {'id': '1-1', 'name': 'salad'},
         {'id': '1-2', 'name': 'tomato'}
     ];
-    var dataCopy = [
-        {'id': '0', 'name': 'fruit'},
-        {'id': '0-1', 'name': 'apple'},
-        {'id': '0-2', 'name': 'pear'},
-        {'id': '1', 'name': 'vegetable'},
-        {'id': '1-0', 'name': 'carrot'},
-        {'id': '1-1', 'name': 'salad'},
-        {'id': '1-2', 'name': 'tomato'}
-    ];
     var tree = monkey.createTree(data, 'id');
     
     // check if copy of original data is the same after converting tree to list
-    assertEquals(dataCopy, tree.toList());
+    assertEquals(data, tree.toList());
 };
 
 CountTest.prototype.testCountLevel = function() {
@@ -1013,19 +1004,10 @@ OtherTest.prototype.testCopy = function() {
         {'id': '1-1', 'name': 'salad'},
         {'id': '1-2', 'name': 'tomato'}
     ];
-    var dataCopy = [
-        {'id': '0', 'name': 'fruit'},
-        {'id': '0-1', 'name': 'apple'},
-        {'id': '0-2', 'name': 'pear'},
-        {'id': '1', 'name': 'vegetable'},
-        {'id': '1-0', 'name': 'carrot'},
-        {'id': '1-1', 'name': 'salad'},
-        {'id': '1-2', 'name': 'tomato'}
-    ];
     
     var tree = monkey.createTree(data, 'id');
     var copiedTree = tree.copy();
     
     // check if copied values are the same as in list containing copy of original values
-    assertEquals(dataCopy, copiedTree.toList());
+    assertEquals(data, copiedTree.toList());
 };

@@ -19,13 +19,7 @@ Monkey version with parent attribute in nodes.
 (function(global) {
     var __version = 0.2;
     var monkey = {};
-    var baseTree = {};
-    
-    // trees will inherit from this object
-    var baseTree = {
-        'idColumn': undefined,
-        'treeData': undefined
-    };
+    //var baseTree = {};
     
     ///////////////////////////////////////////////////////////////////////////
     //                           TREE CREATION                               //
@@ -34,16 +28,13 @@ Monkey version with parent attribute in nodes.
     // Creates a new tree and copies data in it. Initial data is not changed.
     // Uses idColumn to define hierarchy.
     // Returns new tree.
-    monkey.createTree = function(data, idColumn) {
+    monkey.createTree = function(data, idColumn, parentColumn) {
         var newTree;
-        var idColumn = idColumn || 'id';
         
         assertList(data, 'createTree');
         assertString(idColumn, 'createTree');
         
-        newTree = baseTree.spawnTree();
-        newTree['treeData'] = createTreeData(idColumn);
-        newTree['idColumn'] = idColumn;
+        newTree = new Tree(idColumn, parentColumn);
         
         data.forEach(function (newNode) {
             newTree.insertNode(newNode);
@@ -52,534 +43,580 @@ Monkey version with parent attribute in nodes.
         return newTree;
     };
     
-    ///////////////////////////////////////////////////////////////////////////
-    //                        TREE INTERFACE                                 //
-    ///////////////////////////////////////////////////////////////////////////
-    
-    // Inserts value into this tree. Finds direct parent of a new node
-    // by comparing id. If such node is not in tree, does not insert node.
-    // If new node should be inserted in place where exists removed node,
-    // then removed node is replaced with the new node.
-    // Returns tree after insertion.
-    baseTree.insertNode = function(value) {
-        var replaceNode = function(oldNode, newNode) {
-            var i;
-            var parentNode;
+    var Tree = function(idColumn, parentColumn) {
+        var root;
+        var rootData = {};
+        var idColumn = idColumn || 'id';
+        var idMap = {};
+        
+        rootData = {};
+        rootData[idColumn] = '__root__';
+        root = new Node(rootData, undefined, idMap, idColumn);
+        
+        return {
+            // Inserts value into this tree. Finds direct parent of a new node
+            // by comparing id. If such node is not in tree, does not insert node.
+            // If new node should be inserted in place where exists removed node,
+            // then removed node is replaced with the new node.
+            // Returns tree after insertion.
+            insertNode: function(value) {
+                var id = value[idColumn];
+                var parentId;
+                var parentNode;
+                var newNode;
+                
+                parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
+                parentNode = this.getNode(parentId);
+                if (!parentNode) return this;        
+                
+                newNode = new Node(value, parentNode, idMap, idColumn);
+                parentNode.children.add(newNode, idMap);
+                
+                return this;
+            },
             
-            parentNode = oldNode['parent'];
-            newNode['parent'] = parentNode;
-            newNode['children'] = oldNode['children'];
-            for (i = 0; i < parentNode['children'].length; ++i) {
-                if (parentNode['children'][i] === oldNode) {
-                    parentNode['children'][i] = newNode;
+            // Removes node and all his descendants from this tree. Will not remove the root node.
+            // Returns tree after node removal.
+            removeNode: function(elem) {
+                var parentNode;
+                var childNodes;
+                var node;
+                
+                isIdType(elem) ? assertId(elem, 'removeNode') : assertNodeInTree(this, this.nodeId(elem), false, 'removeNode');
+                assertRemoveType(type, 'remove');
+                
+                parentNode = this.parent(elem);
+                if (!parentNode) return this;
+                
+                node = isIdType(elem) ? this.getNode(elem) : elem;
+                parentNode.children.remove(node.id);
+                
+                return this;
+            },
+            
+            // Finds node with specified id and returns it. If ignoreRemoved is true(default value),
+            // then if node exists in the tree but was removed, undefined will be returned,
+            // otherwise this node will be returned.
+            // If node is not in the tree, undefined will be returned.
+            getNode: function(id, ignoreRemoved) {    
+                var node;
+                var realId;
+                var ignoreRemoved = (ignoreRemoved === undefined) ? true : ignoreRemoved;
+
+                assertId(id, 'getNode');
+                
+                if (id === '__root__') return root;
+                
+                realId = idMap[id];
+                if (!realId) return undefined;
+                
+                node = root;
+                while (!!node && node.id !== id) {
+                    node = getChild(node, realId, idMap);
+                }
+                
+                if (!!node && node.removed && ignoreRemoved) return undefined;
+                
+                return node;
+            },
+            
+            // Returns parent node of element being a node or a node's id.
+            // If copy is set to false(default value), reference is returned, otherwise
+            // returns copy of parent without tree hierarchy info(parent and children).
+            parent: function(elem, copy) {
+                var node;
+                var copy = copy || false;
+                
+                if (isIdType(elem)) {
+                    assertId(elem, 'parent');
+                    
+                    node = this.getNode(elem);
+                } else {
+                    assertNode(elem);
+                    
+                    node = elem;
+                }
+                
+                if (!!node) {
+                    return (copy) ? deepCopy(node.parent) : node.parent;
+                }
+                else {
+                    return undefined;
+                }
+            },
+            
+            // Returns the root node of this tree.
+            root: function() {
+                return root;
+            },
+            
+            // Checks if elem(node or node's id) specifies the root node of this tree.
+            isRoot: function(elem) {
+                var id = (isIdType(elem)) ? elem : this.nodeId(elem);
+                
+                return id === this.nodeId( this.root() );
+            },
+            
+            // Returns true if node didn't pass filtration, otherwise false
+            isNodeFiltered: function(elem) {
+                var node;
+                
+                isIdType(elem) ? assertId(elem, 'isNodeFiltered') :
+                                 assertNode(elem, idColumn, 'isNodeFiltered');
+                
+                node = isIdType(elem) ? this.getNode(elem, false) : elem;
+                
+                return (!!node) ? node.filtered : false;
+            },
+            
+            // Checks if ancestorNode is a ancestor of childNode.
+            // Returns true if yes, otheriwse false.
+            isAncestor: function(ancestorNode, childNode) {
+                var parentNode;
+                
+                assertNode(ancestorNode, idColumn, 'isAncestor');
+                assertNode(childNode, idColumn, 'isAncestor');
+                
+                if (this.isRoot(ancestorNode)) {
+                    return !this.isRoot(childNode);
+                }
+                else if (this.isRoot(childNode)) {
+                    return false;
+                }
+                
+                parentNode = this.parent(childNode);
+                while (!this.isRoot(parentNode)) {
+                    if (this.nodeId(ancestorNode) === this.nodeId(parentNode)) return true;
+                    parentNode = this.parent(parentNode);
+                }
+                
+                return false;
+            },
+            
+            // Returns left sibling of node specified by elem(node or its id).
+            // If the node has no left sibling, return undefined.
+            // If copy is set to false(default value), reference is returned, otherwise
+            // returns copy of left sibling node without tree hierarchy info(parent and children).
+            leftSibling: function(elem, copy) {
+                var siblingsNodes;
+                var i;
+                var last;
+                var id;
+                var copy = copy || false;
+                
+                isIdType(elem) ? assertId(elem, 'leftSibling') : assertNodeInTree(this, this.nodeId(elem), false, 'leftSibling');
+                
+                if (this.isRoot(elem)) return undefined;
+                
+                id = isIdType(elem) ? elem : this.nodeId(elem);
+                parentNode = this.parent(elem);
+                siblingsNodes = this.children(parentNode);
+                last = siblingsNodes.length;
+                for (i = 1; i < last; ++i) {
+                    if (this.nodeId(siblingsNodes[i]) === id) {
+                        if (copy) {
+                            return deepCopy(siblingsNodes[i - 1]);
+                        } else {
+                            return siblingsNodes[i - 1];
+                        }
+                    }
+                }
+                
+                return undefined;
+            },
+            
+            // Returns right sibling of node specified by elem(node or its id).
+            // If the node has no right sibling, return undefined.
+            // If copy is set to false(default value), reference is returned, otherwise
+            // returns copy of right sibling node without tree hierarchy info(parent and children).
+            rightSibling: function(elem, copy) {
+                var parentNode;
+                var siblingsNodes;
+                var i;
+                var nextToLast;
+                var id;
+                var copy = copy || false;
+                
+                isIdType(elem) ? assertId(elem, 'leftSibling') : assertNodeInTree(this, this.nodeId(elem), false, 'leftSibling');
+                
+                if ( this.isRoot(elem) ) return undefined;
+                
+                id = isIdType(elem) ? elem : this.nodeId(elem);
+                parentNode = this.parent(elem);
+                siblingsNodes = this.children(parentNode);
+                nextToLast = siblingsNodes.length - 1;
+                for (i = 0; i < nextToLast; ++i) {
+                    if (this.nodeId(siblingsNodes[i]) === id) {
+                        if (copy) {
+                            return deepCopy(siblingsNodes[i + 1]);
+                        } else {
+                            return siblingsNodes[i + 1];
+                        }
+                    }
+                }
+                
+                return undefined;
+            },
+            
+            // Returns sibling of node specified by elem(node or its id),
+            // sibling is specified by number which is number of it on
+            // his parent's list. If such a node can not be found, returns undefined.
+            // If copy is set to false(default value), reference is returned, otherwise
+            // returns copy of sibling node without tree hierarchy info(parent and children).
+            sibling: function(elem, siblingNr, copy) {
+                var siblingsNodes;
+                var copy = copy || false;
+                
+                isIdType(elem) ? assertId(elem, 'sibling') : assertNodeInTree(this, this.nodeId(elem), false, 'sibling');
+                assertNumber(siblingNr, 'sibling');
+                
+                if ( this.isRoot(elem) ) return (siblingNr === 0) ? this.root() : undefined;
+                
+                siblingsNodes = this.children(this.parent(elem));
+                
+                if (0 <= siblingNr && siblingNr < siblingsNodes.length) {
+                    if (copy) {
+                        return deepCopy(siblingsNodes[siblingNr]);
+                    } else {
+                        return siblingsNodes[siblingNr];
+                    }
+                } else {
+                    return undefined;
+                }
+            },
+            
+            // Returns children nodes of a node specified by elem(node or its id).
+            // If copy is set to false(default value), references are returned, otherwise
+            // returns copies of nodes, each copy without tree hierarchy info(parent and children).
+            children: function(elem, copy) {
+                var node;
+                var copy = !!copy || false;
+                
+                isIdType(elem) ? assertId(elem, 'children') : assertNodeInTree(this, this.nodeId(elem), false, 'children');
+                
+                node = isIdType(elem) ? this.getNode(elem) : elem;
+                
+                if (copy) {
+                    return (!!node) ? node.children.get().map(function(childNode) {
+                                          return deepCopy(childNode);
+                                      }) : [];
+                } else {
+                    return (!!node) ? node.children.get() : [];
+                }
+            },
+            
+            // Return subtree which root is node specified by elem(node or its id).
+            // If copy is set to false(default value), reference is returned, otherwise
+            // returns new tree with nodes from subtree and changed ids.
+            subtree: function(elem, copy) {
+                var copySubtree = function(srcTree, dstTree, node) {
+                    dstTree.insertNode(srcTree.value(node));
+                    
+                    srcTree.children(node).forEach( function(childNode) {
+                        copySubtree(srcTree, dstTree, childNode);
+                    });
+                    
+                    // must be done after inserting his children
+                    if (srcTree.isNodeFiltered(node)) {
+                        node.filtered = true;
+                    }
+                };
+                
+                var copy = copy || false;
+                var newTree;
+                var subtreeNode;
+                
+                isIdType(elem) ? assertId(elem, 'subtree') : assertNodeInTree(this, this.nodeId(elem), false, 'subtree');
+                subtreeNode = isIdType(elem) ? this.getNode(elem) : elem;
+                
+                if (!copy) {
+                    return subtreeNode;
+                } else {
+                    newTree = new Tree(idColumn, parentColumn);
+                    copySubtree(this, newTree, subtreeNode);
+                    
+                    return newTree;
+                }
+            },
+            
+            // Returns value of node specified by elem(node or its id).
+            value: function(elem) {
+                var valueCopy;
+                var node;
+                
+                isIdType(elem) ? assertId(elem, 'value') : assertNodeInTree(this, this.nodeId(elem), false, 'value');
+                
+                node = isIdType(elem) ? this.getNode(elem) : elem;
+                
+                if (!node) return undefined;
+
+                valueCopy = deepCopy(node, false);
+                
+                return valueCopy;
+            },
+            
+            // Returns next node of node specified by elem(node or its id). Next node is chosen
+            // according to parent-left-right traversing direction. If it is the last node,
+            // returns undefined. If ignoreRemoved is true(default value), then next will return next
+            // not removed node, otherwise removed attribute will not matter.
+            next: function(elem, ignoreRemoved) {
+                var getNextNode = function(tree, elem) {
+                    var childNodes;
+                    var rightSiblingNode;
+                    var ancestorNode;
+                    
+                    childNodes = tree.children(elem);
+                    if (childNodes.length) return childNodes[0];
+                    
+                    rightSiblingNode = tree.rightSibling(elem);
+                    if ( !!rightSiblingNode ) return rightSiblingNode;
+                    
+                    if ( tree.isRoot(elem) ) return undefined;
+                    
+                    ancestorNode = tree.parent(elem);
+                    while ( !tree.isRoot(ancestorNode) ) {
+                        rightSiblingNode = tree.rightSibling(ancestorNode);
+                        if ( !!rightSiblingNode ) return rightSiblingNode;
+                        ancestorNode = tree.parent(ancestorNode);
+                    }
+                    
+                    return undefined;
+                };
+                var nextNode;
+                var ignoreRemoved = (ignoreRemoved === undefined) ? true : ignoreRemoved;
+                
+                isIdType(elem) ? assertId(elem, 'next') : assertNodeInTree(this, this.nodeId(elem), false, 'next');
+                
+                nextNode = getNextNode(this, elem);
+                while (ignoreRemoved && !!nextNode && this.isNodeFiltered(nextNode)) {
+                    nextNode = getNextNode(this, nextNode);
+                }
+                
+                return nextNode;
+            },
+            
+            // Iterates over this tree and calls fun function, which is given
+            // one argument: actual node. Returns the tree.
+            forEach: function(fun) {
+                var nextNode = this.next(this.root());
+                var copiedNode;
+                
+                while (!!nextNode) {
+                    //copiedNode = this.value(nextNode);
+                    fun(nextNode);
+                    nextNode = this.next(nextNode);
+                }
+                
+                return this;
+            },
+            
+            // Equivalent of map for lists. Creates new tree and inserts into it nodes
+            // that are results of passed function fun, which gets actual node as argument.
+            // Returns new tree.
+            map: function(fun) {
+                var nextNode = this.next(this.root());
+                var copiedNode;
+                var modifiedNode;
+                var copiedTree = new Tree(idColumn, parentColumn);
+                
+                while (!!nextNode) {
+                    copiedNode = deepCopy(nextNode, true);
+                    modifiedNode = fun(copiedNode);
+                    copiedTree.insertNode(modifiedNode);
+                    nextNode = this.next(nextNode);
+                }
+                
+                return copiedTree;
+            },
+            
+            // Returns number of nodes in subtree with root specified by elem(node or its id).
+            countSubtree: function(elem) {
+                var elem = elem || this.root();
+                var subtreeRoot;
+                var counter;
+                var nextNode;
+                
+                isIdType(elem) ? assertId(elem, 'countSubtree') : assertNodeInTree(this, this.nodeId(elem), false, 'countSubtree');
+                
+                subtreeRoot = isIdType(elem) ? this.getNode(elem) : elem;
+                if (!subtreeRoot) return 0;
+                
+                counter = this.isRoot(subtreeRoot) ? 0 : 1;
+                nextNode = this.next(subtreeRoot);
+                
+                while (!!nextNode && this.isAncestor(subtreeRoot, nextNode)) {
+                    counter += 1;
+                    nextNode = this.next(nextNode);
+                }
+                
+                return counter;
+            },
+            
+            // Returns number of nodes on level of elem(node or its id).
+            countLevel: function(elem) {
+                var siblings;
+                var parentNode;
+                
+                isIdType(elem) ? assertId(elem, 'countLevel') :
+                                 assertNodeInTree(this, this.nodeId(elem), false, 'countLevel');
+
+                if (this.isRoot(elem)) return 0;
+                
+                parentNode = this.parent(elem);
+                if (!parentNode) return 0;
+                siblings = this.children(parentNode);
+                
+                return siblings.length;
+            },
+            
+            // Returns id of a node.
+            nodeId: function(node) {
+                return node.id;
+            },
+            
+            // Copies tree and returns copied instance.
+            copy: function(tree) {
+                return this.map(function(node) {
+                    return node;
+                });
+            },
+            
+            // Copies nodes' values(no hierarchy information) from this tree to
+            // a list in order specified by next function.
+            // Returns created list.
+            toList: function() {
+                var saveInList = function(node) {
+                    list.push(nodeToValue(node));
+                };
+                
+                var list = [];
+                
+                this.forEach(saveInList);
+                
+                return list;
+            }
+        
+        };
+    };
+    
+    
+    var Node = function(value, parentNode, idMap, idColumn) {
+        var property;
+        var valueCopy = deepCopy(value, true);
+        
+        var _id = valueCopy[idColumn];
+        var _parent = parentNode;
+        var _filtered = false;
+        var _children = new Children(_id, idMap);
+        
+        Object.defineProperty(this, 'parent', {
+            get: function() { return _parent; },
+            set: function(newParentNode) {
+                this.parent.children.remove(_id);
+                if (!!newParentNode) {
+                    newParentNode.children.add(this, parentNode.id, idMap);
+                    _parent = newParentNode;
+                }
+        }});
+        Object.defineProperty(this, 'children', {
+            get: function() { return _children; }
+        });
+        Object.defineProperty(this, 'filtered', {
+            get: function() { return _filtered; },
+            set: function(newValue) { _filtered = !!newValue; }
+        });
+        Object.defineProperty(this, 'id', {
+            get: function() { return _id; },
+            set: function(newValue) {
+                if (!idMap[newValue]) {
+                    idMap[newValue] = idMap[_id];
+                    delete idMap[_id];
+                    _id = newValue;
+                }
+            }
+        });
+        
+        for (property in valueCopy) {
+            if (valueCopy.hasOwnProperty(property) && property !== 'parent' &&
+                property !== 'children' && property !== 'id' && property !== 'filtered') {
+                    this[property] = valueCopy[property];
+            }
+        }
+        
+        if (!!parentNode) {
+            parentNode.children.add(this, idMap);
+        } else {
+            idMap['__root__'] = '';
+        }
+    };
+    
+    var Children = function(parentId, idMap, data) {
+        var generateInnerId = function(parentId, idMap) {
+            var lastChild;
+            var lastChildId;
+            var idParts;
+            var len;
+            var idMap = idMap;
+            
+            len = nodes.length;
+            
+            if (len === 0)
+                return (idMap[parentId] === '') ? '0' : idMap[parentId] + '-0';
+            
+            lastChild = nodes[len - 1];
+            lastChildId = idMap[ lastChild.id ];
+            idParts = lastChildId.split('-');
+            idParts[idParts.length - 1] = (parseInt(idParts[idParts.length - 1]) + 1) + '';
+            return idParts.join('-');
+        };
+        var nodes = [];
+        var i;
+        var len;
+        
+        this.add = function(node/*, parentId*/, idMap) {
+            if (!idMap[node.id]) {
+                idMap[node.id] = generateInnerId(parentId, idMap);
+                nodes.push(node);
+            } else {
+                for (i = 0; i < nodes.length; ++i) {
+                    if (nodes[i].id === node.id) {
+                        if (!nodes[i].removed) break;
+                        
+                        nodes[i].get().forEach(function(e) {
+                            node.children.add(e, parentId, idMap);
+                            e.parent = node;
+                        });
+                        nodes[i].parent = undefined;
+                        nodes[i] = node;
+                        break;
+                    }
+                }
+            }
+        };
+        this.remove = function(id) {
+            for (i = 0; i < nodes.length; ++i) {
+                if (nodesi[i].id === id) {
+                    nodes[i].parent = undefined;
+                    nodes.splice(i, 1);
                     break;
                 }
             }
-            
-            oldNode['children'].forEach(function(childNode) {
-                childNode['parent'] = newNode;
-            });
+        };
+        this.get = function(nr) {
+            return (nr === undefined) ? nodes : nodes[nr];
+        };
+        this.length = function() {
+            return nodes.length;
         };
         
-        var id = this.nodeId(value);
-        var parentId;
-        var parentNode;
-        var newNode;
-        
-        parentId = getParentId(id);
-        parentNode = this.getNode(parentId);
-        if (!parentNode) return this;        
-        
-        newNode = valueToNode(value, parentNode);
-        
-        if (this.isNodeRemoved(id)) {
-            replaceNode(this.getNode(id, false), newNode);
-        } else {        
-            insertChild(parentNode, newNode, this['idColumn']);
-        }
-        
-        return this;
-    };
-    
-    // Removes a node or a subtree from this tree.
-    // Returns tree after an element removal.
-    baseTree.remove = function(elem, type) {
-        var parentNode;
-        var childNodes;
-        var node;
-        
-        isIdType(elem) ? assertId(elem, 'removeNode') : assertNodeInTree(this, this.nodeId(elem), false, 'removeNode');
-        assertRemoveType(type, 'baseTree.remove');
-        
-        parentNode = this.parent(elem);
-        if (!parentNode) return this;
-        
-        node = isIdType(elem) ? this.getNode(elem) : elem;
-        
-        type === 'node' ? removeNode(parentNode, node, this['idColumn']) :
-                          removeSubtree(parentNode, node, this['idColumn']);
-        
-        return this;
-    };
-    
-    // Removes node from this tree. Will not remove the root node.
-    // If this node has not removed children, it will be marked as removed but
-    // it will remain in the tree until all his descendants are removed or
-    // new node replaces it.
-    // Returns tree after node removal.
-    baseTree.removeNode = function(elem) {
-        this.remove(elem, 'node');
-        
-        return this;
-    };
-    
-    // Removes subtree from this tree. Will not remove subtree with
-    // root the same as tree's root. Removes nodes without marking them as removed
-    // (like in removeNode function).
-    // Returns tree after subtree removal.
-    baseTree.removeSubtree = function(elem) {
-        this.remove(elem, 'subtree');
-        
-        return this;
-    };
-    
-    // Finds node with specified id and returns it. If ignoreRemoved is true(default value),
-    // then if node exists in the tree but was removed, undefined will be returned,
-    // otherwise this node will be returned.
-    // If node is not in the tree, undefined will be returned.
-    baseTree.getNode = function(id, ignoreRemoved) {    
-        var node;
-        var ignoreRemoved = (ignoreRemoved === undefined) ? true : ignoreRemoved;
-        
-        assertId(id, 'getNode');
-        
-        node = this['treeData']['root'];
-        if (id === null) return node;
-
-        while (!!node && this.nodeId(node) !== id) {
-            node = getChild(node, id, this['idColumn']);
-        }
-        
-        if (!!node && this.isNodeRemoved(node) && ignoreRemoved) return undefined;
-        
-        return node;
-    };
-    
-    // Returns parent node of element being a node or a node's id.
-    // If copy is set to false(default value), reference is returned, otherwise
-    // returns copy of parent without tree hierarchy info(parent and children).
-    baseTree.parent = function(elem, copy) {
-        var node;
-        var copy = copy || false;
-        
-        if (isIdType(elem)) {
-            assertId(elem, 'parent');
-            
-            node = this.getNode(elem);
-        } else {
-            assertNode(elem);
-            
-            node = elem;
-        }
-        
-        //return (!!node) ? node['parent'] : undefined;
-        if (copy) {
-            return (!!node) ? deepCopy(node['parent']) : undefined;
-        } else {
-            return (!!node) ? node['parent'] : undefined;
-        }
-    };
-    
-    // Returns the root node of this tree.
-    baseTree.root = function() {
-        return this['treeData']['root'];
-    };
-    
-    // Checks if elem(node or node's id) specifies the root node of this tree.
-    baseTree.isRoot = function(elem) {
-        var id = (isIdType(elem)) ? elem : this.nodeId(elem);
-        
-        return id === this.nodeId( this.root() );
-    };
-    
-    // Returns true if node is marked to be removed, otherwise false
-    baseTree.isNodeRemoved = function(elem) {
-        var node;
-        
-        isIdType(elem) ? assertId(elem, 'isNodeRemoved') :
-                         assertNode(elem, this['idColumn'], 'isNodeRemoved');
-        
-        node = isIdType(elem) ? this.getNode(elem, false) : elem;
-        
-        return (!!node) ? !!node['removed'] : false;
-    };
-    
-    // Checks if ancestorNode is a ancestor of childNode.
-    // Returns true if yes, otheriwse false.
-    baseTree.isAncestor = function(ancestorNode, childNode) {
-        var parentNode;
-        
-        assertNode(ancestorNode, this['idColumn'], 'isAncestor');
-        assertNode(childNode, this['idColumn'], 'isAncestor');
-        
-        if (this.isRoot(ancestorNode)) {
-            return !this.isRoot(childNode);
-        }
-        else if (this.isRoot(childNode)) {
-            return false;
-        }
-        
-        parentNode = this.parent(childNode);
-        while (!this.isRoot(parentNode)) {
-            if (this.nodeId(ancestorNode) === this.nodeId(parentNode)) return true;
-            parentNode = this.parent(parentNode);
-        }
-        
-        return false;
-    };
-    
-    // Returns left sibling of node specified by elem(node or its id).
-    // If the node has no left sibling, return undefined.
-    // If copy is set to false(default value), reference is returned, otherwise
-    // returns copy of left sibling node without tree hierarchy info(parent and children).
-    baseTree.leftSibling = function(elem, copy) {
-        var parentNode;
-        var siblingsNodes;
-        var i;
-        var last;
-        var id;
-        var copy = copy || false;
-        
-        isIdType(elem) ? assertId(elem, 'leftSibling') : assertNodeInTree(this, this.nodeId(elem), false, 'leftSibling');
-        
-        if (this.isRoot(elem)) return undefined;
-        
-        id = isIdType(elem) ? elem : this.nodeId(elem);
-        parentNode = this.parent(elem);
-        siblingsNodes = this.children(parentNode);
-        last = siblingsNodes.length;
-        for (i = 1; i < last; ++i) {
-            if (this.nodeId(siblingsNodes[i]) === id) {
-                if (copy) {
-                    return deepCopy(siblingsNodes[i - 1]);
-                } else {
-                    return siblingsNodes[i - 1];
-                }
-            }
-        }
-        
-        return undefined;
-    };
-    
-    // Returns right sibling of node specified by elem(node or its id).
-    // If the node has no right sibling, return undefined.
-    // If copy is set to false(default value), reference is returned, otherwise
-    // returns copy of right sibling node without tree hierarchy info(parent and children).
-    baseTree.rightSibling = function(elem, copy) {
-        var parentNode;
-        var siblingsNodes;
-        var i;
-        var nextToLast;
-        var id;
-        var copy = copy || false;
-        
-        isIdType(elem) ? assertId(elem, 'leftSibling') : assertNodeInTree(this, this.nodeId(elem), false, 'leftSibling');
-        
-        if ( this.isRoot(elem) ) return undefined;
-        
-        id = isIdType(elem) ? elem : this.nodeId(elem);
-        parentNode = this.parent(elem);
-        siblingsNodes = this.children(parentNode);
-        nextToLast = siblingsNodes.length - 1;
-        for (i = 0; i < nextToLast; ++i) {
-            if (this.nodeId(siblingsNodes[i]) === id) {
-                if (copy) {
-                    return deepCopy(siblingsNodes[i + 1]);
-                } else {
-                    return siblingsNodes[i + 1];
-                }
-            }
-        }
-        
-        return undefined;
-    };
-    
-    // Returns sibling of node specified by elem(node or its id),
-    // sibling is specified by number which is number of it on
-    // his parent's list. If such a node can not be found, returns undefined.
-    // If copy is set to false(default value), reference is returned, otherwise
-    // returns copy of sibling node without tree hierarchy info(parent and children).
-    baseTree.sibling = function(elem, siblingNr, copy) {
-        var siblingsNodes;
-        var copy = copy || false;
-        
-        isIdType(elem) ? assertId(elem, 'sibling') : assertNodeInTree(this, this.nodeId(elem), false, 'sibling');
-        assertNumber(siblingNr, 'sibling');
-        
-        if ( this.isRoot(elem) ) return (siblingNr === 0) ? this.root() : undefined;
-        
-        siblingsNodes = this.children(this.parent(elem));
-        
-        if (0 <= siblingNr && siblingNr < siblingsNodes.length) {
-            if (copy) {
-                return deepCopy(siblingsNodes[siblingNr]);
-            } else {
-                return siblingsNodes[siblingNr];
-            }
-        } else {
-            return undefined;
-        }
-    };
-    
-    // Returns children nodes of a node specified by elem(node or its id).
-    // If copy is set to false(default value), references are returned, otherwise
-    // returns copies of nodes, each copy without tree hierarchy info(parent and children).
-    baseTree.children = function(elem, copy) {
-        var node;
-        var copy = !!copy || false;
-        
-        isIdType(elem) ? assertId(elem, 'children') : assertNodeInTree(this, this.nodeId(elem), false, 'children');
-        
-        node = isIdType(elem) ? this.getNode(elem) : elem;
-        
-        if (copy) {
-            return (!!node) ? node['children'].map(function(childNode) {
-                                  return deepCopy(childNode);
-                              }) : [];
-        } else {
-            return (!!node) ? node['children'] : [];
-        }
-    };
-    
-    // Return subtree which root is node specified by elem(node or its id).
-    // If copy is set to false(default value), reference is returned, otherwise
-    // returns new tree with nodes from subtree and changed ids.
-    baseTree.subtree = function(elem, copy) {
-        var copySubtree = function(srcTree, dstTree, node) {
-            dstTree.insertNode(srcTree.value(node));
-            
-            srcTree.children(node).forEach( function(childNode) {
-                copySubtree(srcTree, dstTree, childNode);
-            });
-            
-            // must be done after inserting his children
-            if (srcTree.isNodeRemoved(node)) {
-                dstTree.removeNode(node);
-            }
-        };
-        var cutId = function(id, level) {
-            var idx = 0;
-            
-            // remove part of higher levels (higher than new first level node)
-            while (!!level) {
-                if (id[idx] === '-') --level;
-                ++idx;
-            }
-            id = id.substring(idx);
-            
-            // replace first level id number with 1
-            while (id[idx] !== '-' && idx < id.length) ++idx;
-            id = id.substring(idx);
-            
-            return '1-' + id;
-        };
-        
-        var copy = copy || false;
-        var newTree;
-        var subtreeNode;
-        var level;
-        
-        isIdType(elem) ? assertId(elem, 'subtree') : assertNodeInTree(this, this.nodeId(elem), false, 'subtree');
-        subtreeNode = isIdType(elem) ? this.getNode(elem) : elem;
-        
-        if (!copy) {
-            return subtreeNode;
-        } else {
-            level = count(srcTree.nodeId(subtreeNode));
-            newTree = this.spawnTree();
-            newTree['treeData'] = createTreeData(this['idColumn']);
-            newTree['idColumn'] = this['idColumn'];
-            copySubtree(this, newTree, subtreeNode);
-            
-            return newTree.map(function(node) {
-                node[newTree['idColumn']] = cutId(node[newTree['idColumn']], level);
-                return node;
+        if (!!data) {
+            assertList(data, 'Children');
+            data.forEach(function(e) {
+                this.add(node, parentId, idMap);
             });
         }
-    };
-    
-    // Returns value of node specified by elem(node or its id).
-    baseTree.value = function(elem) {
-        var valueCopy;
-        var node;
-        
-        isIdType(elem) ? assertId(elem, 'value') : assertNodeInTree(this, this.nodeId(elem), false, 'value');
-        
-        node = isIdType(elem) ? this.getNode(elem) : elem;
-        
-        if (!node) return undefined;
-
-        valueCopy = deepCopy(node, false);
-        
-        return valueCopy;
-    };
-    
-    // Returns next node of node specified by elem(node or its id). Next node is chosen
-    // according to parent-left-right traversing direction. If it is the last node,
-    // returns undefined. If ignoreRemoved is true(default value), then next will return next
-    // not removed node, otherwise removed attribute will not matter.
-    baseTree.next = function(elem, ignoreRemoved) {
-        var getNextNode = function(tree, elem) {
-            var childNodes;
-            var rightSiblingNode;
-            var ancestorNode;
-            
-            childNodes = tree.children(elem);
-            if (childNodes.length) return childNodes[0];
-            
-            rightSiblingNode = tree.rightSibling(elem);
-            if ( !!rightSiblingNode ) return rightSiblingNode;
-            
-            if ( tree.isRoot(elem) ) return undefined;
-            
-            ancestorNode = tree.parent(elem);
-            while ( !tree.isRoot(ancestorNode) ) {
-                rightSiblingNode = tree.rightSibling(ancestorNode);
-                if ( !!rightSiblingNode ) return rightSiblingNode;
-                ancestorNode = tree.parent(ancestorNode);
-            }
-            
-            return undefined;
-        };
-        var nextNode;
-        var ignoreRemoved = (ignoreRemoved === undefined) ? true : ignoreRemoved;
-        
-        isIdType(elem) ? assertId(elem, 'next') : assertNodeInTree(this, this.nodeId(elem), false, 'next');
-        
-        nextNode = getNextNode(this, elem);
-        while (ignoreRemoved && !!nextNode && this.isNodeRemoved(nextNode)) {
-            nextNode = getNextNode(this, nextNode);
-        }
-        
-        return nextNode;
-    };
-    
-    // Iterates over this tree and calls fun function, which is given
-    // one argument: actual node. Returns the tree.
-    baseTree.iterate = function(fun) {
-        var nextNode = this.next(this.root());
-        var copiedNode;
-        
-        while (!!nextNode) {
-            copiedNode = this.value(nextNode);
-            fun(copiedNode);
-            nextNode = this.next(nextNode);
-        }
         
         return this;
-    };
-    
-    // Does the same as iterate. Returns the tree.
-    baseTree.forEach = function(fun) {
-        this.iterate(fun);
-        
-        return this;
-    };
-    
-    // Equivalent of map for lists. Creates new tree and inserts into it nodes
-    // that are results of passed function fun, which gets actual node as argument.
-    // Returns new tree.
-    baseTree.map = function(fun) {
-        var nextNode = this.next(this.root());
-        var copiedNode;
-        var modifiedNode;
-        var copiedTree = baseTree.spawnTree();
-        
-        copiedTree['treeData'] = createTreeData(this['idColumn']);
-        copiedTree['idColumn'] = this['idColumn'];
-        
-        while (!!nextNode) {
-            copiedNode = deepCopy(nextNode, true);
-            modifiedNode = fun(copiedNode);
-            copiedTree.insertNode(modifiedNode);
-            nextNode = this.next(nextNode);
-        }
-        
-        return copiedTree;
-    };
-    
-    // Returns number of nodes in subtree with root specified by elem(node or its id).
-    baseTree.countSubtree = function(elem) {
-        var elem = elem || this.root();
-        var subtreeRoot;
-        var counter;
-        var nextNode;
-        
-        isIdType(elem) ? assertId(elem, 'countSubtree') : assertNodeInTree(this, this.nodeId(elem), false, 'countSubtree');
-        
-        subtreeRoot = isIdType(elem) ? this.getNode(elem) : elem;
-        if (!subtreeRoot) return 0;
-        
-        counter = this.isRoot(subtreeRoot) ? 0 : 1;
-        nextNode = this.next(subtreeRoot);
-        
-        while (!!nextNode && this.isAncestor(subtreeRoot, nextNode)) {
-            counter += 1;
-            nextNode = this.next(nextNode);
-        }
-        
-        return counter;
-    };
-    
-    // Returns number of nodes on level of elem(node or its id).
-    baseTree.countLevel = function(elem) {
-        var siblings;
-        var parentNode;
-        
-        isIdType(elem) ? assertId(elem, 'countLevel') :
-                         assertNodeInTree(this, this.nodeId(elem), false, 'countLevel');
-
-        if (this.isRoot(elem)) return 0;
-        
-        parentNode = this.parent(elem);
-        if (!parentNode) return 0;
-        siblings = this.children(parentNode);
-        
-        return siblings.length;
-    };
-    
-    // Returns id of a node.
-    baseTree.nodeId = function(node) {
-        return node[ this['idColumn'] ];
-    };
-    
-    // Copies tree and returns copied instance.
-    baseTree.copy = function(tree) {
-        return this.map(function(node) {
-            return node;
-        });
-    };
-    
-    // Copies nodes' values(no hierarchy information) from this tree to
-    // a list in order specified by next function.
-    // Returns created list.
-    baseTree.toList = function() {
-        var saveInList = function(node) {
-            list.push(nodeToValue(node));
-        };
-        
-        var list = [];
-        
-        this.forEach(saveInList);
-        
-        return list;
-    }
-    
-    // Creates and returns an object with tree methods.
-    baseTree.spawnTree = function() {
-        function BaseTree() {};
-        BaseTree.prototype = baseTree;
-        return new BaseTree();
     };
     
     
@@ -587,94 +624,19 @@ Monkey version with parent attribute in nodes.
     //                       TREE CREATION HELPER FUNCTIONS                  //
     ///////////////////////////////////////////////////////////////////////////
     
-    // Inserts childNode to parentNodes children collection.
-    // Sorts nodes after insertion.
-    var insertChild = function(parentNode, childNode, idColumn) {
-        assertNode(parentNode);
-        
-        parentNode['children'].push(childNode);
-        
-        sortNodes(parentNode['children'], idColumn);
-    };
-    
-    // Removes subtree with root childNode or only childNode from
-    // parentNode's children collection. IdColumn contains ids,
-    // type specifies type of removal: 'node' or 'subtree'.
-    var remove = function(parentNode, childNode, idColumn, type) {
-        var canBeRemoved = function(node) {
-            var childNodes;
-            var allChildrenRemoved;
-            var i;
-            
-            assertNode(node);
-            assertId(idColumn);
-            
-            allChildrenRemoved = true;
-            for (i = 0; i < node['children'].length; ++i) {
-                if (!node['children'][i]['removed']) {
-                    allChildrenRemoved = false;
-                    break;
-                } else {
-                    allChildrenRemoved &= canBeRemoved(node['children'][i]);
-                }
-            }
-            
-            return allChildrenRemoved;
-        };
-        var i;
-        var childNodes;
-        
-        assertNode(parentNode);
-        assertNode(childNode);
-        assertRemoveType(type);
-        
-        childNodes = parentNode['children'];
-        id = childNode[idColumn];
-        
-        for (i = 0; i < childNodes.length; ++i) {
-            if (id === childNodes[i][idColumn]) {
-                break;
-            }
-        }
-        
-        if (type === 'subtree') {
-            childNodes.splice(i, 1);
-        } else {
-            if (canBeRemoved(childNodes[i])) {
-                childNodes.splice(i, 1);
-                if (!!parentNode['removed']) {
-                    remove(parentNode['parent'], parentNode, idColumn, 'node');
-                }
-            } else {
-                childNodes[i]['removed'] = true;
-            }
-        }
-    };
-    
-    // Removes node childNode from parentNodes children collection,
-    // idColumn is name of attribute with node's ids.
-    var removeNode = function(parentNode, childNode, idColumn) {
-        remove(parentNode, childNode, idColumn, 'node');
-    };
-    
-    // Removes subtree with root childNode from parentNode's children collections,
-    // idColumn is name of attribute with node's ids.
-    var removeSubtree = function(parentNode, childNode, idColumn) {
-        remove(parentNode, childNode, idColumn, 'subtree');
-    };
-    
     // Returns childNode with id = childId from node's children collection,
-    // idColumn is name of attribute with node's ids.
-    var getChild = function(node, childId, idColumn) {
+    // idMap is map: userId -> treeId
+    var getChild = function(node, childId, idMap) {
         var childrenList;
         
         assertNode(node, 'getChild');
         assertNonEmptyString(childId, 'getChild');
         
-        childrenList = node['children'].filter(function(e) {
-            var level = count(e[idColumn], '-');
+        childrenList = node.children.get().filter(function(e) {
+            var realId = idMap[e.id];
+            var level = count(realId, '-');
             var levelId = getIdOnLevel(childId, level);
-            return e[idColumn] === levelId;
+            return realId === levelId;
         });
         
         return (childrenList.length > 0) ? childrenList[0] : undefined;
@@ -722,7 +684,7 @@ Monkey version with parent attribute in nodes.
     var getParentId = function(id) {
         var lastIndex = id.lastIndexOf('-');
         
-        return (lastIndex !== -1) ? id.substring(0, lastIndex) : null;
+        return (lastIndex !== -1) ? id.substring(0, lastIndex) : '__root__';
     };
     
     // Returns id on specified level(returns id cut off in place when
@@ -787,7 +749,8 @@ Monkey version with parent attribute in nodes.
             objectCopy = {};
             for (property in value) {
                 if (value.hasOwnProperty(property)) {
-                    if (!copyAll && (property === 'children' || property === 'parent'))
+                    if (!copyAll && (property === 'children' || property === 'parent' ||
+                        property === 'id' || property === 'filtered'))
                         continue;
                         
                     objectCopy[property] = deepCopy(value[property]);
@@ -807,17 +770,6 @@ Monkey version with parent attribute in nodes.
     // Returns true if elem can be id, otherwise false.
     var isIdType = function(elem) {
         return elem === null || elem.constructor === String;
-    };
-    
-    // Returns node that is created from value, parent node is set.
-    var valueToNode = function(value, parentNode) {
-        var node;
-        
-        node = deepCopy(value, true);
-        node['parent'] = parentNode;
-        node['children'] = [];
-        
-        return node;
     };
     
     // Returns value of node, does not contain children collection and parent node.

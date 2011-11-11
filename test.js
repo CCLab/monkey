@@ -23,10 +23,10 @@ Testing monkey.
     var someId = '1-0';
     
     var tree = monkey.createTree(listData, 'id');
-    console.log(tree.getNode(tree['treeData']['root']['id']));
-    /*childrenList.forEach( function(el) {
+    console.log(tree.getNode(tree.root().id));
+    childrenList.forEach( function(el) {
         tree.insertNode(el);
-    });*/
+    });
     tree.insertNode(childrenList[0])
         .insertNode(childrenList[1]);
     
@@ -42,11 +42,11 @@ Testing monkey.
     
     
     var count = 0;
-    tree2.iterate(function(node) { document.write(node['idef'] + '<hr>'); ++count;});
+    tree2.forEach(function(node) { document.write(node['idef'] + '<hr>'); ++count;});
     document.write('count = ' + count);
     
     var treeMaped = tree2.map(function(node){ node['type'] = node['type'] + node['type']; return node;});
-    treeMaped.iterate(function(node) { document.write(node['idef'] + '<hr>'); ++count;});
+    treeMaped.forEach(function(node) { document.write(node['idef'] + '<hr>'); ++count;});
     print('tree2 count = ' + tree2.countSubtree() + '<hr>');
     print('treeMaped count = ' + treeMaped.countSubtree() + '<hr>');
     print('tree2 count 1-1 = ' + tree2.countSubtree('1-1') + '<hr>');

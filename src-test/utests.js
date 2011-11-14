@@ -9,10 +9,10 @@ BasicFunctionsTest = TestCase("BasicFunctionsTest");
 // Functions tested: parent(), children(), leftSibling(), rightSibling(), sibling(), isAncestor()
 TreeTraversingTest = TestCase("TreeTraversingTest");
 
-// Functions tested: insertNode(), removeNode(), removeSubtree(), remove(), isNodeRemoved()
+// Functions tested: insertNode(), removeNode(), isNodeFiltered()
 ModificationTest = TestCase("ModificationTest");
 
-// Functions tested: next(), iterate(), forEach(), map(), toList()
+// Functions tested: next(), forEach(), map(), forEach(), toList()
 IterationTest = TestCase("IterationTest");
 
 // Functions tested: countLevel(), countSubtree()
@@ -713,6 +713,69 @@ IterationTest.prototype.testMap = function() {
     tree.forEach(function(node) {
         node['badId'] = node['id'];
     });
+};
+
+IterationTest.prototype.testFilter = function() {
+    var data = [
+        {'id': '0', 'name': 'fruit', 'val': 4},
+        {'id': '0-1', 'name': 'apple', 'val': 5},
+        {'id': '0-2', 'name': 'pear', 'val': 2},
+        {'id': '1', 'name': 'vegetable', 'val': 3},
+        {'id': '1-0', 'name': 'carrot', 'val': 4},
+        {'id': '1-1', 'name': 'salad', 'val': 5},
+        {'id': '1-2', 'name': 'tomato', 'val': 6}
+    ];
+    var tree;
+    var filteredTree;
+    var filteredNodes;
+    
+    // give filter conditition that is satisfied by every node and check
+    // if none nodes are filtered
+    tree = monkey.createTree(data, 'id');
+    filteredTree = tree.filter(function(node) {
+        return node['val'] > 1;
+    });
+    filteredNodes = tree.toList()
+                        .filter(function(e) {
+                            return e['val'] > 1;
+                        });
+    assertEquals(filteredNodes, filteredTree.toList());
+    
+    // check if leafs are filtered out properly
+    fileteredTree = filteredTree.filter(function(node) {
+        return node['val'] > 2;
+    });
+    
+    filteredNodes = tree.toList()
+                        .filter(function(e) {
+                            return e['val'] > 2;
+                        });
+    assertEquals(filteredNodes, filteredTree.toList());
+    assertTrue(filteredTree.isNodeFiltered('0-2'));
+    
+    // check if non-leaf nodes are filtered out properly
+    fileteredTree = filteredTree.filter(function(node) {
+        return node['val'] > 3;
+    });
+    
+    filteredNodes = tree.toList()
+                        .filter(function(e) {
+                            return e['val'] > 3;
+                        });
+    assertEquals(filteredNodes, filteredTree.toList());
+    assertTrue(filteredTree.isNodeFiltered('1'));
+    
+    // check if all nodes can be filtered out properly
+    fileteredTree = filteredTree.filter(function(node) {
+        return node['val'] > 100;
+    });
+    
+    filteredNodes = tree.toList()
+                        .filter(function(e) {
+                            return e['val'] > 100;
+                        });
+    assertEquals(filteredNodes, filteredTree.toList());
+    assertTrue(filteredTree.isNodeFiltered('0'));
 };
 
 IterationTest.prototype.testToList = function() {

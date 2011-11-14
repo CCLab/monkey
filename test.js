@@ -6,14 +6,43 @@ Testing monkey.
 
 (function() {
     var data = [
-        {'idef': '0', 'name': 'fruit'},
-        {'idef': '0-1', 'name': 'apple'},
-        {'idef': '0-2', 'name': 'pear'},
-        {'idef': '1', 'name': 'vegetable'},
-        {'idef': '1-0', 'name': 'carrot'},
-        {'idef': '1-1', 'name': 'salad'},
-        {'idef': '1-2', 'name': 'tomato'}
+        {'id': '0', 'name': 'fruit', 'val': 4},
+        {'id': '0-1', 'name': 'apple', 'val': 5},
+        {'id': '0-2', 'name': 'pear', 'val': 2},
+        {'id': '1', 'name': 'vegetable', 'val': 3},
+        {'id': '1-0', 'name': 'carrot', 'val': 4},
+        {'id': '1-1', 'name': 'salad', 'val': 5},
+        {'id': '1-2', 'name': 'tomato', 'val': 6}
     ];
+    var tree;
+    var filteredTree;
+    var filteredNodes;
+    
+    // give filter conditition that is satisfied by every node and check
+    // if none nodes are filtered
+    tree = monkey.createTree(data, 'id');
+    filteredTree = tree.filter(function(node) {
+        return node['val'] > 1;
+    });
+    filteredNodes = tree.toList()
+                        .filter(function(e) {
+                            return !e['filtered'];
+                        });
+                        /*.map(function(e) {
+                            return e;
+                        })*/
+    
+    // check if leafs are filtered out properly
+    fileteredTree = filteredTree.filter(function(node) {
+        return node['val'] > 2;
+    });
+    
+    filteredNodes = filteredTree.toList()
+                                .filter(function(e) {
+                                    return e['val'] > 2;
+                                });
+    
+    tree = monkey.createTree(data, 'id');
     var emptyData = [];
     
     var tree = monkey.createTree(data, 'idef');

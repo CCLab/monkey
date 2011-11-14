@@ -437,6 +437,25 @@ Monkey version with parent attribute in nodes.
                 return copiedTree;
             },
             
+            // Returns new tree with filtered nodes.
+            filter: function(fun) {
+                var nextNode = this.next(root());
+                var copiedNode;
+                var copiedTree = new Tree(idColumn, parentColumn);
+                var isFiltered;
+                
+                while (!!nextNode) {
+                    copiedNode = deepCopy(nextNode, idColumn);
+                    isFiltered = !fun(copiedNode);
+                    copiedTree.insertNode(copiedNode);
+                    copiedNode = this.getNode(copiedNode[idColumn]);
+                    copiedNode['filtered'] = !!isFiltered;
+                    nextNode = this.next(nextNode);
+                }
+                
+                return copiedTree;
+            },
+            
             // Returns number of nodes in subtree with root specified by elem(node or its id).
             countSubtree: function(elem) {
                 var elem = elem || root();

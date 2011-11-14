@@ -45,6 +45,7 @@ CreationTest.prototype.testEmptyCreation = function() {
     assertEquals('function', typeof tree.value);
     assertEquals('function', typeof tree.next);
     assertEquals('function', typeof tree.forEach);
+    assertEquals('function', typeof tree.filter);
     assertEquals('function', typeof tree.map);
     assertEquals('function', typeof tree.countSubtree);
     assertEquals('function', typeof tree.countLevel);
@@ -119,19 +120,26 @@ BasicFunctionsTest.prototype.testGet = function() {
         {'id': '1', 'name': 'vegetable'},
     ];
     var tree = monkey.createTree(simpleData, 'id');
+    var copy;
+    
+    // test result for root
+    assertEquals('__root__', tree.getNode('__root__').id);
+    assertSame(tree.getNode('__root__'), tree.root());
     
     // test result for various level nodes
     assertEquals('0', tree.getNode('0').id);
     assertEquals('1', tree.getNode('1').id);
-
-    // test result for root
-    assertEquals('__root__', tree.getNode('__root__').id);
-    assertSame(tree.getNode('__root__'), tree.root());
     
     // test result for not existing nodes
     assertUndefined(tree.getNode('1-0'));
     assertUndefined(tree.getNode('2'));
     assertUndefined(tree.getNode('1-0-3'));
+    
+    // test if copies are returned properly
+    copy = tree.getNode('0', true);
+    assertEquals(simpleData[0], copy);
+    copy['id'] = '1000';
+    assertEquals(simpleData[0], tree.getNode('0', true));
 };
 
 BasicFunctionsTest.prototype.testGetId = function() {
@@ -167,6 +175,7 @@ BasicFunctionsTest.prototype.testValue = function() {
     var badNode = {};
     var badId = {};
     var value;
+    var tmpNode;
     
     // check if copies of original values are the same as values of nodes
     // (without parent and children properties)
@@ -174,11 +183,9 @@ BasicFunctionsTest.prototype.testValue = function() {
     assertEquals(simpleData[1], tree.value(tree.getNode('1')));
     assertEquals(simpleData[2], tree.value(tree.getNode('0-0')));
     
-    // check if function works for id argument and node argument
-    assertEquals(simpleData[0], tree.value('0'));
-    
     // check if changing value does not affect tree
-    tree.value('0')['name'] = 'notfruit';
+    tmpNode = tree.value('0');
+    tmpNode['name'] = 'notfruit';
     assertEquals(simpleData[0], tree.value(tree.getNode('0')));
     
     // check if value does not copy node properties
@@ -186,6 +193,12 @@ BasicFunctionsTest.prototype.testValue = function() {
     assertUndefined(value['children']);
     assertUndefined(value['parent']);
     assertUndefined(value['filtered']);
+    
+    // check if function works for id argument and node argument
+    assertEquals(simpleData[0], tree.value('0'));
+    
+    // check if undefined is returned for nonexisting nodes
+    assertUndefined(tree.value('1213'));
     
     // test reaction for bad argument: bad node
     assertException(function() {
@@ -273,12 +286,12 @@ TreeTraversingTest.prototype.testChildren = function() {
     // check ids of first level node's children
     assertEquals(['1-0', '1-1', '1-2'], getIdsInList(tree.children(tree.getNode('1'))));
     
-    // check if the same result is for a node argument and an id argument
-    //assertEquals(getIdsInList(tree.children(tree.getNode('1'))), getIdsInList(tree.children('1')));
-    assertSame(tree.children(tree.getNode('1')), tree.children('1'));
-    
     // check ids of leaf node's children
     assertEquals([], getIdsInList(tree.children(tree.getNode('1-2'))));
+    
+    // check if the same result is for a node argument and an id argument
+    assertEquals(getIdsInList(tree.children(tree.getNode('1'))), getIdsInList(tree.children('1')));
+    assertSame(tree.children(tree.getNode('1')), tree.children('1'));
     
     // test for not existing node
     assertEquals([], tree.children('2'));
@@ -286,10 +299,7 @@ TreeTraversingTest.prototype.testChildren = function() {
     // check if children() returns copies when second parameter is set to true
     childNodesCopies1 = tree.children('1', true);
     assertEquals(data[4], childNodesCopies1[0]);
-    
-    childNodesCopies1[0]['name'] = 'noncarrot';
-    assertNotEquals(data[4], childNodesCopies1[0]);
-    assertNotEquals(tree.value('1-0'), childNodesCopies1[0]);
+    assertNotSame(data[4], childNodesCopies1[0]);
     
     
     // check if children throws exceptions with bad argument(bad id)
@@ -334,8 +344,8 @@ TreeTraversingTest.prototype.testSiblingFunctions = function() {
     assertUndefined(tree.rightSibling('1'));
     
     // check if sibling is the same for any node on the specified level
-    assertSame(tree.sibling(tree.getNode('0'), 0), tree.getNode('0'));
-    assertSame(tree.sibling(tree.getNode('0'), 0), tree.sibling(tree.getNode('1'), 0));
+    assertSame(tree.getNode('0'), tree.sibling(tree.getNode('0'), 0));
+    assertSame(tree.getNode('0'), tree.sibling(tree.getNode('1'), 0));
     
     // check if sibling functions gives the same result for node argument and id argument
     assertSame(tree.leftSibling(tree.getNode('1')), tree.leftSibling('1'));
@@ -357,6 +367,11 @@ TreeTraversingTest.prototype.testSiblingFunctions = function() {
     assertNotSame(leftSiblingNodeCopy, siblingNodeCopy);
     assertEquals(rightSiblingNodeCopy, siblingNodeCopy);
     assertNotSame(rightSiblingNodeCopy, siblingNodeCopy);
+    
+    // check if all functions return undefined for nonexisting node
+    assertUndefined(tree.leftSibling('1-5'));
+    assertUndefined(tree.rightSibling('1-5'));
+    assertUndefined(tree.sibling('1-5', 6));
     
     // check if sibling functions throw exceptions with bad argument(bad id)
     assertException(function() {
@@ -399,7 +414,8 @@ TreeTraversingTest.prototype.testAncestor = function() {
         {'id': '1', 'name': 'vegetable'},
         {'id': '1-0', 'name': 'carrot'},
         {'id': '1-1', 'name': 'salad'},
-        {'id': '1-2', 'name': 'tomato'}
+        {'id': '1-2', 'name': 'tomato'},
+        {'id': '1-2-1', 'name': 'redtomato'}
     ];
     var tree = monkey.createTree(data, 'id');
     var badNode = {};
@@ -408,10 +424,12 @@ TreeTraversingTest.prototype.testAncestor = function() {
     assertTrue(tree.isAncestor(tree.root(), tree.getNode('0')));
     assertTrue(tree.isAncestor(tree.root(), tree.getNode('1')));
     assertTrue(tree.isAncestor(tree.root(), tree.getNode('1-2')));
+    assertFalse(tree.isAncestor(tree.root(), tree.root()));
     
     // check if first level node is ancestor for various level nodes
     assertTrue(tree.isAncestor(tree.getNode('0'), tree.getNode('0-1')));
     assertTrue(tree.isAncestor(tree.getNode('0'), tree.getNode('0-2')));
+    assertTrue(tree.isAncestor(tree.getNode('1'), tree.getNode('1-2-1')));
     
     assertFalse(tree.isAncestor(tree.getNode('0'), tree.getNode('1')));
     assertFalse(tree.isAncestor(tree.getNode('0'), tree.root()));

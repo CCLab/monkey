@@ -102,14 +102,14 @@ Monkey version with parent attribute in nodes.
                 return this;
             },
             
-            // Finds node with specified id and returns it. If ignoreRemoved is true(default value),
-            // then if node exists in the tree but was removed, undefined will be returned,
-            // otherwise this node will be returned.
+            // Finds node with specified id and returns it.
+            // If copy is set to false(default value), reference is returned, otherwise
+            // returns copy of parent without tree hierarchy info(parent and children).
             // If node is not in the tree, undefined will be returned.
-            getNode: function(id, ignoreRemoved) {    
+            getNode: function(id, copy) {    
                 var node;
                 var realId;
-                var ignoreRemoved = (ignoreRemoved === undefined) ? true : ignoreRemoved;
+                var copy = copy || false;
 
                 assertId(id, 'getNode');
                 
@@ -123,9 +123,10 @@ Monkey version with parent attribute in nodes.
                     node = getChild(node, realId, idMap);
                 }
                 
-                if (!!node && node.removed && ignoreRemoved) return undefined;
-                
-                return node;
+                if (!!node)
+                    return (copy) ? this.value(node) : node;
+                else
+                    return undefined;
             },
             
             // Returns parent node of element being a node or a node's id.
@@ -145,12 +146,10 @@ Monkey version with parent attribute in nodes.
                     node = elem;
                 }
                 
-                if (!!node) {
+                if (!!node)
                     return (copy) ? this.value(node.parent) : node.parent;
-                }
-                else {
+                else
                     return undefined;
-                }
             },
             
             // Returns the root node of this tree.
@@ -218,6 +217,8 @@ Monkey version with parent attribute in nodes.
                 
                 id = isIdType(elem) ? elem : this.nodeId(elem);
                 parentNode = this.parent(elem);
+                if (!parentNode) return undefined;
+                
                 siblingsNodes = this.children(parentNode);
                 last = siblingsNodes.length;
                 for (i = 1; i < last; ++i) {
@@ -251,6 +252,8 @@ Monkey version with parent attribute in nodes.
                 
                 id = isIdType(elem) ? elem : this.nodeId(elem);
                 parentNode = this.parent(elem);
+                if (!parentNode) return undefined;
+                
                 siblingsNodes = this.children(parentNode);
                 nextToLast = siblingsNodes.length - 1;
                 for (i = 0; i < nextToLast; ++i) {
@@ -274,11 +277,15 @@ Monkey version with parent attribute in nodes.
             sibling: function(elem, siblingNr, copy) {
                 var siblingsNodes;
                 var copy = copy || false;
+                var parentNode;
                 
                 isIdType(elem) ? assertId(elem, 'sibling') : assertNodeInTree(this, this.nodeId(elem), false, 'sibling');
                 assertNumber(siblingNr, 'sibling');
                 
                 if ( isRoot(elem) ) return (siblingNr === 0) ? root() : undefined;
+                
+                parentNode = this.parent(elem);
+                if (!parentNode) return undefined;
                 
                 siblingsNodes = this.children(this.parent(elem));
                 
@@ -300,7 +307,7 @@ Monkey version with parent attribute in nodes.
                 var node;
                 var copy = !!copy || false;
                 
-                isIdType(elem) ? assertId(elem, 'children') : assertNodeInTree(this, this.nodeId(elem), false, 'children');
+                isIdType(elem) ? assertId(elem, 'children') : assertNode(this, this.nodeId(elem), false, 'children');
                 
                 node = isIdType(elem) ? this.getNode(elem) : elem;
                 

@@ -5,6 +5,17 @@ Testing monkey.
 */
 
 (function() {
+    var simpleData = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '1', 'name': 'vegetable'},
+    ];
+    var tree = monkey.createTree(simpleData, 'id');
+    var copy;
+    
+    copy = tree.getNode('0', true);
+    copy['id'] = '1000';
+    
+    
     var data = [
         {'id': '0', 'name': 'fruit', 'val': 4},
         {'id': '0-1', 'name': 'apple', 'val': 5},

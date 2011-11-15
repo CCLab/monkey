@@ -5,25 +5,51 @@ Testing monkey.
 */
 
 (function() {
-var data = [
-        {'id': '0', 'name': 'fruit'},
-        {'id': '0-1', 'name': 'apple'},
-        {'id': '0-1-1', 'name': 'a-apple'},
-        {'id': '0-1-2', 'name': 'b-apple'},
-        {'id': '0-1-3', 'name': 'c-apple'},
-        {'id': '0-2', 'name': 'pear'},
-        {'id': '1', 'name': 'vegetable'},
-        {'id': '1-0', 'name': 'carrot'},
-        {'id': '1-1', 'name': 'salad'},
-        {'id': '1-2', 'name': 'tomato'}
+    var data = [
+        {'id': '0', 'name': 'fruit', 'val': 4},
+        {'id': '0-1', 'name': 'apple', 'val': 5},
+        {'id': '0-2', 'name': 'pear', 'val': 2},
+        {'id': '1', 'name': 'vegetable', 'val': 3},
+        {'id': '1-0', 'name': 'carrot', 'val': 4},
+        {'id': '1-1', 'name': 'salad', 'val': 5},
+        {'id': '1-2', 'name': 'tomato', 'val': 6}
     ];
+    var tree;
+    var filteredTree;
+    var filteredNodes;
     
-    var tree = monkey.createTree(data, 'id');
-    var subtree;
+    // give filter conditition that is satisfied by every node and check
+    // if none nodes are filtered
+    tree = monkey.createTree(data, 'id');
+    filteredTree = tree.filter(function(node) {
+        return node['val'] > 1;
+    });
+    filteredNodes = tree.toList()
+                        .filter(function(e) {
+                            return e['val'] > 1;
+                        });
+    /*var x = filteredTree.toList();
     
-    // check if subtree returns node with copy set to false(or not set)
+    // check if leafs are filtered out properly
+    var z = filteredTree.filter(function(node) {
+        return node['val'] > 2;
+    });*/
+    filteredTree = filteredTree.filter(function(node) {
+        return node['val'] > 2;
+    });
+    //var a = z.toList();
+    //var b = filteredTree.toList();
     
-    subtree = tree.subtree('0', true);
+    filteredNodes = tree.toList()
+                        .filter(function(e) {
+                            return e['val'] > 2;
+                        });
+    //var y = filteredTree.toList();
+    filteredTree = filteredTree.filter(function(node) {
+        return node['val'] > 100;
+    });
+    var n = filteredTree.getNode('0');
+    n = filteredTree.getNode('0-2');
     
     
     var data = [

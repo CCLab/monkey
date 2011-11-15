@@ -71,18 +71,19 @@ Monkey version with parent attribute in nodes.
             // If new node should be inserted in place where exists removed node,
             // then removed node is replaced with the new node.
             // Returns tree after insertion.
-            insertNode: function(value) {
+            insertNode: function(value, isFiltered) {
                 var id = value[idColumn];
                 var parentId;
                 var parentNode;
                 var newNode;
+                var isFiltered = isFiltered || false;
                 
                 parentId = (!!parentColumn) ? value[parentColumn] : getParentId(id);
                 if (parentId === '')    parentId = '__root__';
                 parentNode = this.getNode(parentId);
                 if (!parentNode) return this;        
                 
-                newNode = new Node(value, parentNode, idMap, idColumn, parentColumn);
+                newNode = new Node(value, parentNode, idMap, idColumn, parentColumn, isFiltered);
                 parentNode.children.add(newNode, idMap);
                 
                 return this;
@@ -177,7 +178,7 @@ Monkey version with parent attribute in nodes.
                 
                 node = isIdType(elem) ? this.getNode(elem, false) : elem;
                 
-                return (!!node) ? node.filtered : false;
+                return (!!node) ? node['filtered'] : false;
             },
             
             // Checks if ancestorNode is a ancestor of childNode.
@@ -329,7 +330,7 @@ Monkey version with parent attribute in nodes.
             // returns new tree with nodes from subtree and changed ids.
             subtree: function(elem, copy) {
                 var copySubtree = function(srcTree, dstTree, node) {
-                    dstTree.insertNode(srcTree.value(node));
+                    dstTree.insertNode(srcTree.value(node), node['filtered']);
                     
                     srcTree.children(node).forEach( function(childNode) {
                         copySubtree(srcTree, dstTree, childNode);
@@ -347,6 +348,8 @@ Monkey version with parent attribute in nodes.
                 
                 isIdType(elem) ? assertId(elem, 'subtree') : assertNodeInTree(this, this.nodeId(elem), false, 'subtree');
                 subtreeNode = isIdType(elem) ? this.getNode(elem) : elem;
+                
+                if (!subtreeNode) return undefined;
                 
                 if (!copy) {
                     return subtreeNode;
@@ -405,9 +408,9 @@ Monkey version with parent attribute in nodes.
                 isIdType(elem) ? assertId(elem, 'next') : assertNode(this, this.nodeId(elem), false, 'next');
                 
                 nextNode = getNextNode(this, elem);
-                while (!!nextNode && this.isNodeFiltered(nextNode)) {
+                /*while (!!nextNode && this.isNodeFiltered(nextNode)) {
                     nextNode = getNextNode(this, nextNode);
-                }
+                }*/
                 
                 return nextNode;
             },
@@ -438,7 +441,7 @@ Monkey version with parent attribute in nodes.
                 while (!!nextNode) {
                     copiedNode = deepCopy(nextNode, idColumn, parentColumn);
                     modifiedNode = fun(copiedNode);
-                    copiedTree.insertNode(modifiedNode);
+                    copiedTree.insertNode(modifiedNode, modifiedNode['filtered']);
                     nextNode = this.next(nextNode);
                 }
                 
@@ -455,9 +458,9 @@ Monkey version with parent attribute in nodes.
                 while (!!nextNode) {
                     copiedNode = deepCopy(nextNode, idColumn, parentColumn);
                     isFiltered = !fun(copiedNode);
-                    copiedTree.insertNode(copiedNode);
+                    copiedTree.insertNode(copiedNode, !!isFiltered);
                     copiedNode = this.getNode(copiedNode[idColumn]);
-                    copiedNode['filtered'] = !!isFiltered;
+                    //copiedNode['filtered'] = !!isFiltered;
                     nextNode = this.next(nextNode);
                 }
                 
@@ -517,9 +520,6 @@ Monkey version with parent attribute in nodes.
                 });
                 copy.constructor = Node;
                 return copy;
-                /*return this.map(function(node) {
-                    return node;
-                });*/
             },
             
             // Copies nodes' values(no hierarchy information) from this tree to
@@ -527,7 +527,8 @@ Monkey version with parent attribute in nodes.
             // Returns created list.
             toList: function() {
                 var saveInList = function(node) {
-                    list.push(nodeToValue(node, idColumn, parentColumn));
+                    if (!node['filtered'])
+                        list.push(nodeToValue(node, idColumn, parentColumn));
                 };
                 
                 var list = [];
@@ -541,30 +542,24 @@ Monkey version with parent attribute in nodes.
     };
     
     
-    var Node = function(value, parentNode, idMap, idColumn, parentColumn) {
+    var Node = function(value, parentNode, idMap, idColumn, parentColumn, isFiltered) {
         var property;
         var valueCopy = deepCopy(value, idColumn, parentColumn);
         
         var _id = valueCopy[idColumn];
         var _parent = parentNode;
-        var _filtered = false;
+        var _filtered = isFiltered;
         var _children = new Children(_id, idMap);
         
         Object.defineProperty(this, 'parent', {
-            get: function() { return _parent; }/*,
-            set: function(newParentNode) {
-                this.parent.children.remove(_id);
-                if (!!newParentNode) {
-                    newParentNode.children.add(this, parentNode.id, idMap);
-                    _parent = newParentNode;
-                }
-        }*/});
+            get: function() { return _parent; }
+        });
         Object.defineProperty(this, 'children', {
             get: function() { return _children; }
         });
         Object.defineProperty(this, 'filtered', {
-            get: function() { return _filtered; },
-            set: function(newValue) { _filtered = !!newValue; }
+            get: function() { return _filtered; }
+            ,set: function(newValue) { _filtered = !!newValue; }
         });
         Object.defineProperty(this, 'id', {
             get: function() { return _id; },

@@ -41,7 +41,6 @@ CreationTest.prototype.testEmptyCreation = function() {
     assertEquals('function', typeof tree.rightSibling);
     assertEquals('function', typeof tree.sibling);
     assertEquals('function', typeof tree.children);
-    assertEquals('function', typeof tree.subtree);
     assertEquals('function', typeof tree.value);
     assertEquals('function', typeof tree.next);
     assertEquals('function', typeof tree.forEach);
@@ -52,6 +51,7 @@ CreationTest.prototype.testEmptyCreation = function() {
     assertEquals('function', typeof tree.nodeId);
     assertEquals('function', typeof tree.copy);
     assertEquals('function', typeof tree.toList);
+    assertEquals('function', typeof tree.subtree);
 };
 
 CreationTest.prototype.testNotEmptyCreation = function() {
@@ -539,10 +539,6 @@ ModificationTest.prototype.testRemoveNode = function() {
     var badNode = {};
     var badId = {};
     
-    // test isNodeFiltered for not removed nodes
-    assertFalse(tree.isNodeFiltered('0'));
-    assertFalse(tree.isNodeFiltered('0-1'));
-    
     // test removing nodes with id argument for various levels
     tree.removeNode('2');
     assertEquals(['0', '1'], getIdsInList(tree.children(tree.root())));
@@ -759,7 +755,7 @@ IterationTest.prototype.testFilter = function() {
     assertEquals(filteredNodes, filteredTree.toList());
     
     // check if leafs are filtered out properly
-    fileteredTree = filteredTree.filter(function(node) {
+    filteredTree = filteredTree.filter(function(node) {
         return node['val'] > 2;
     });
     
@@ -771,7 +767,7 @@ IterationTest.prototype.testFilter = function() {
     assertTrue(filteredTree.isNodeFiltered('0-2'));
     
     // check if non-leaf nodes are filtered out properly
-    fileteredTree = filteredTree.filter(function(node) {
+    filteredTree = filteredTree.filter(function(node) {
         return node['val'] > 3;
     });
     
@@ -783,7 +779,7 @@ IterationTest.prototype.testFilter = function() {
     assertTrue(filteredTree.isNodeFiltered('1'));
     
     // check if all nodes can be filtered out properly
-    fileteredTree = filteredTree.filter(function(node) {
+    filteredTree = filteredTree.filter(function(node) {
         return node['val'] > 100;
     });
     
@@ -793,7 +789,7 @@ IterationTest.prototype.testFilter = function() {
                         });
     assertEquals(filteredNodes, filteredTree.toList());
     assertTrue(filteredTree.isNodeFiltered('0'));
-    assertTrue(filteredTree.isNodeFiltered('1-2'));
+    assertTrue(filteredTree.isNodeFiltered('0-2'));
 };
 
 IterationTest.prototype.testToList = function() {
@@ -929,13 +925,13 @@ OtherTest.prototype.testCopy = function() {
 };
 
 OtherTest.prototype.testSubtree = function() {
-    var getIds = function(list) {
+    var getVals = function(list, arg) {
         var ids = [];
         list.forEach(function(node) {
-            ids.push(node['id']);
+            ids.push(node[arg]);
         });
         return ids;
-    }
+    };
     var data = [
         {'id': '0', 'name': 'fruit'},
         {'id': '0-1', 'name': 'apple'},
@@ -948,14 +944,37 @@ OtherTest.prototype.testSubtree = function() {
         {'id': '1-1', 'name': 'salad'},
         {'id': '1-2', 'name': 'tomato'}
     ];
+    var parentData = [
+        {'id': '0', 'name': 'fruit', 'parent': ''},
+        {'id': '0-1', 'name': 'apple', 'parent': 'fruit'},
+        {'id': '0-1-1', 'name': 'a-apple', 'parent': 'apple'},
+        {'id': '0-1-2', 'name': 'b-apple', 'parent': 'apple'},
+        {'id': '0-1-3', 'name': 'c-apple', 'parent': 'apple'},
+        {'id': '0-2', 'name': 'pear', 'parent': 'fruit'},
+        {'id': '1', 'name': 'vegetable', 'parent': ''},
+        {'id': '1-0', 'name': 'carrot', 'parent': 'vegetable'},
+        {'id': '1-1', 'name': 'salad', 'parent': 'vegetable'},
+        {'id': '1-2', 'name': 'tomato', 'parent': 'vegetable'}
+    ];
     
     var tree = monkey.createTree(data, 'id');
     var subtree;
+    var parentTree = monkey.createTree(parentData, 'name', 'parent');
     
     // check if subtree returns node with copy set to false(or not set)
     assertEquals(tree.getNode('0'), tree.subtree('0'));
     
-    // check if correct nodes are in subtree
+    // check if correct nodes are in subtree(for 2 types of trees)
     subtree = tree.subtree('0', true);
-    assertEquals(['0', '0-1', '0-1-1', '0-1-2', '0-1-3', '0-2'], getIds(subtree.toList()));
+    assertEquals(['0', '0-1', '0-1-1', '0-1-2', '0-1-3', '0-2'], getVals(subtree.toList(), 'id'));
+    
+    subtree = parentTree.subtree('fruit', true);
+    assertEquals(['fruit', 'apple', 'a-apple', 'b-apple', 'c-apple', 'pear'], getVals(subtree.toList(), 'name'));
+    
+    // check if undefined is returned when subtree root does not exist
+    assertUndefined(tree.subtree('-23'));
+    assertUndefined(tree.subtree('-23', true));
+    
+    assertUndefined(parentTree.subtree('nothing'));
+    assertUndefined(parentTree.subtree('nothing', true));
 };

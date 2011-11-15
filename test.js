@@ -5,15 +5,25 @@ Testing monkey.
 */
 
 (function() {
-    var simpleData = [
+var data = [
         {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '0-1-1', 'name': 'a-apple'},
+        {'id': '0-1-2', 'name': 'b-apple'},
+        {'id': '0-1-3', 'name': 'c-apple'},
+        {'id': '0-2', 'name': 'pear'},
         {'id': '1', 'name': 'vegetable'},
+        {'id': '1-0', 'name': 'carrot'},
+        {'id': '1-1', 'name': 'salad'},
+        {'id': '1-2', 'name': 'tomato'}
     ];
-    var tree = monkey.createTree(simpleData, 'id');
-    var copy;
     
-    copy = tree.getNode('0', true);
-    copy['id'] = '1000';
+    var tree = monkey.createTree(data, 'id');
+    var subtree;
+    
+    // check if subtree returns node with copy set to false(or not set)
+    
+    subtree = tree.subtree('0', true);
     
     
     var data = [
@@ -53,13 +63,19 @@ Testing monkey.
                                     return e['val'] > 2;
                                 });
     
-    tree = monkey.createTree(data, 'id');
+    data = [
+        {'idef': '0', 'name': 'fruit', 'val': 4},
+        {'idef': '0-1', 'name': 'apple', 'val': 5},
+        {'idef': '0-2', 'name': 'pear', 'val': 2},
+        {'idef': '1', 'name': 'vegetable', 'val': 3},
+        {'idef': '1-0', 'name': 'carrot', 'val': 4},
+        {'idef': '1-1', 'name': 'salad', 'val': 5},
+        {'idef': '1-2', 'name': 'tomato', 'val': 6}
+    ];
     var emptyData = [];
     
     var tree = monkey.createTree(data, 'idef');
     var emptyTree = monkey.createTree(emptyData, 'idef');
-    
-    var hopeNode = tree.children('1', true);
     
     var mappedTree;
     var mappedEmptyTree;

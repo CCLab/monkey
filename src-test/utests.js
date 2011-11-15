@@ -18,7 +18,7 @@ IterationTest = TestCase("IterationTest");
 // Functions tested: countLevel(), countSubtree()
 CountTest = TestCase("CountTest");
 
-// Functions tested: copy()
+// Functions tested: copy(), subtree()
 OtherTest = TestCase("OtherTest");
 
 
@@ -449,14 +449,23 @@ TreeTraversingTest.prototype.testAncestor = function() {
 ModificationTest.prototype.testInsertNode = function() {
     var simpleData = [
         {'id': '0', 'name': 'fruit'},
-        {'id': '4', 'name': 'vegetable'},
+        {'id': '4', 'name': 'vegetable'}
+    ];
+    var simpleDataWithParent = [
+        {'name': 'fruit', 'parent': ''},
+        {'name': 'vegetable', 'parent': ''},
+        {'name': 'apple', 'parent': 'fruit'},
+        {'name': 'carrot', 'parent': 'vegetable'},
     ];
     var tree = monkey.createTree(simpleData, 'id');
+    var par_tree = monkey.createTree(simpleDataWithParent, 'name', 'parent');
     
     var newNode1 = {'id': '2', 'name': 'other'};
     var newNode2 = {'id': '2-0', 'name': 'other-other'};
     var midNode = {'id': '0-0', 'name': 'deep-fruit'};
     var deepNode = {'id': '0-0-0', 'name': 'very-deep-fruit'};
+    var newNode3 = {'name': 'pear', 'parent': 'fruit'};
+    var newNode4 = {'name': 'ear', 'parent': 'hu'};
     var badNode = {'another_id': '2-1', 'name': 'other-another'};
     
     // test if tree is returned
@@ -469,29 +478,36 @@ ModificationTest.prototype.testInsertNode = function() {
     
     // check if node has not changed since insertion
     //TODO
-    //assertEquals(newNode1['id'], tree.nodeId(tree.children(tree.root())[1]));
+    assertEquals(newNode1, tree.value('2'));
     //assertEquals(newNode1['name'], tree.children(tree.root())[1]['name']);
     
     // test if new node is not reinserted
+    tree.insertNode(newNode1);
     assertEquals(3, tree.children(tree.root()).length);
     
     // test if new node is inserted in the good place(correct parent and order)
     tree.insertNode(newNode2);
     assertEquals(1, tree.children(tree.getNode('2')).length);
     
-    // test if deep node is not inserted
+    // test if deep node is not inserted(no direct parent in tree)
     tree.insertNode(deepNode);
     assertEquals([], tree.children('0'));
-    //assertEquals(1, tree.children(tree.getNode('0')).length);
-    //assertEquals('0-0-0-0', tree.nodeId(tree.children('0')[0]));
+    assertEquals(0, tree.children(tree.getNode('0')).length);
     
-    // test if reinserting node previously not inserted deep node works
+    // test if reinserting deep node works when his direct parent is in tree
     tree.insertNode(midNode);
     assertEquals('0-0', tree.nodeId(tree.children('0')[0]));
     assertEquals('0', tree.nodeId(tree.parent('0-0')));
-    
     tree.insertNode(deepNode);
     assertEquals('0-0-0', tree.nodeId(tree.children('0-0')[0]));
+    
+    // test insertion with another kind of hierarchy - parent column
+    par_tree.insertNode(newNode3);
+    assertEquals(par_tree.getNode('fruit'), par_tree.parent('pear'));
+    
+    // test if node is not inserted when parent does not exist - parent Column hierarchy
+    par_tree.insertNode(newNode4);
+    assertUndefined(par_tree.getNode('ear'));
     
     // test reaction for bad node
     assertException(function() {
@@ -523,7 +539,7 @@ ModificationTest.prototype.testRemoveNode = function() {
     var badNode = {};
     var badId = {};
     
-    // test isNodeRemoved for not removed nodes
+    // test isNodeFiltered for not removed nodes
     assertFalse(tree.isNodeFiltered('0'));
     assertFalse(tree.isNodeFiltered('0-1'));
     
@@ -541,26 +557,6 @@ ModificationTest.prototype.testRemoveNode = function() {
     assertEquals(['1-0', '1-1'], getIdsInList(tree.children('1')));
     assertUndefined(tree.getNode('0-1'));
     
-    // test if children nodes of removed node are not copied to children collection
-    // of removed node's parent and parent is marked as removed
-    tree.removeNode('0-2');
-    
-    // test if replacing removed node with new one works
-    //TODO
-    //tree.insertNode(newNode);
-    //assertNotUndefined(tree.getNode('0-2'));
-    //assertEquals(newNode, tree.value('0-2'));
-    //assertEquals([], getIdsInList(tree.children('0-2')));
-    
-    // test if removes subtree when all descendants of removed node are removed
-    //TODO
-    /*tree.removeNode('0-2');
-    assertTrue(tree.isNodeFiltered('0-2'));
-    tree.removeNode('0-2-1');
-    tree.removeNode('0-2-2');
-    assertUndefined(tree.getNode('0-2'));
-    assertUndefined(tree.getNode('0-2', false));
-    
     // test reaction for removing not existing node
     tree.removeNode('3');
     assertEquals(['0', '1'], getIdsInList(tree.children(tree.root())));
@@ -569,7 +565,7 @@ ModificationTest.prototype.testRemoveNode = function() {
     tree.removeNode(tree.root());
     assertNotUndefined(tree.root());
     assertEquals(['0', '1'], getIdsInList(tree.children(tree.root())));
-    */
+    
     // test if exception is thrown for bad argument: bad id
     assertException(function() {
         tree.removeNode(badId);
@@ -619,6 +615,9 @@ IterationTest.prototype.testNext = function() {
     // test next for empty tree
     assertUndefined(emptyTree.next(emptyTree.root()));
     
+    // test next when given node does not exist in tree
+    assertUndefined(tree.next('23'));
+    
     // check if next throws exceptions for bad arguments(bad id)
     assertException(function() {
         tree.next(badId);
@@ -664,7 +663,7 @@ IterationTest.prototype.testForEach = function() {
     tree.forEach(function(node) {
         node['badId'] = node['id'];
     });
-    assertUndefined(tree.root()['badId']);
+    
     assertEquals('0', tree.getNode('0')['badId']);
 };
 
@@ -794,6 +793,7 @@ IterationTest.prototype.testFilter = function() {
                         });
     assertEquals(filteredNodes, filteredTree.toList());
     assertTrue(filteredTree.isNodeFiltered('0'));
+    assertTrue(filteredTree.isNodeFiltered('1-2'));
 };
 
 IterationTest.prototype.testToList = function() {
@@ -841,6 +841,8 @@ CountTest.prototype.testCountLevel = function() {
     
     // test result for not existing node
     assertEquals(0, tree.countLevel('2'));
+    assertEquals(0, tree.countLevel('1-3'));
+    
     
     // test if function throws exception for bad argument: id
     assertException(function() {
@@ -873,8 +875,9 @@ CountTest.prototype.testCountSubtree = function() {
     // test if the default argument is root
     assertEquals(tree.countSubtree(), tree.countSubtree(tree.root()));
     
-    // check result for first level subroot
+    // check result for first/second level subroots
     assertEquals(3, tree.countSubtree(tree.getNode('0')));
+    assertEquals(1, tree.countSubtree(tree.getNode('0-1')));
     
     // check if the function gives the same result for id argument and for node argument
     assertEquals(tree.countSubtree(tree.getNode('0')), tree.countSubtree('0'));
@@ -904,10 +907,55 @@ OtherTest.prototype.testCopy = function() {
         {'id': '1-1', 'name': 'salad'},
         {'id': '1-2', 'name': 'tomato'}
     ];
+    var pData = [
+        {'name': 'fruit', 'parent': ''},
+        {'name': 'apple', 'parent': 'fruit'},
+        {'name': 'pear', 'parent': 'fruit'},
+        {'name': 'vegetable', 'parent': ''},
+        {'name': 'carrot', 'parent': 'vegetable'},
+        {'name': 'salad', 'parent': 'vegetable'},
+        {'name': 'tomato', 'parent': 'vegetable'}
+    ];
     
     var tree = monkey.createTree(data, 'id');
     var copiedTree = tree.copy();
+    var parentTree = monkey.createTree(pData, 'name', 'parent');
+    var copiedParentTree = parentTree.copy();
     
     // check if copied values are the same as in list containing copy of original values
+    // for both of hierarchy representations
     assertEquals(data, copiedTree.toList());
+    assertEquals(pData, parentTree.toList());
+};
+
+OtherTest.prototype.testSubtree = function() {
+    var getIds = function(list) {
+        var ids = [];
+        list.forEach(function(node) {
+            ids.push(node['id']);
+        });
+        return ids;
+    }
+    var data = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '0-1-1', 'name': 'a-apple'},
+        {'id': '0-1-2', 'name': 'b-apple'},
+        {'id': '0-1-3', 'name': 'c-apple'},
+        {'id': '0-2', 'name': 'pear'},
+        {'id': '1', 'name': 'vegetable'},
+        {'id': '1-0', 'name': 'carrot'},
+        {'id': '1-1', 'name': 'salad'},
+        {'id': '1-2', 'name': 'tomato'}
+    ];
+    
+    var tree = monkey.createTree(data, 'id');
+    var subtree;
+    
+    // check if subtree returns node with copy set to false(or not set)
+    assertEquals(tree.getNode('0'), tree.subtree('0'));
+    
+    // check if correct nodes are in subtree
+    subtree = tree.subtree('0', true);
+    assertEquals(['0', '0-1', '0-1-1', '0-1-2', '0-1-3', '0-2'], getIds(subtree.toList()));
 };

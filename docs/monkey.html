@@ -1,0 +1,793 @@
+<!DOCTYPE html>  <html> <head>   <title>monkey.js</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               monkey.js             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="cm">/*</span>
+
+<span class="cm">Monkey is a very simple library used for creating and traversing tree,</span>
+<span class="cm">like an agile monkey.</span>
+
+<span class="cm">Form of created tree:</span>
+<span class="cm">-- creates new root node without value</span>
+<span class="cm">-- all tree nodes are objects</span>
+<span class="cm">-- children nodes are in a &#39;children&#39; parameter</span>
+<span class="cm">-- parent node is in &#39;parent&#39; parameter</span>
+<span class="cm">-- id is in &#39;id&#39; parameter</span>
+<span class="cm">-- is filtered is in &#39;filtered&#39; parameter</span>
+<span class="cm">-- data in node is in other parameters</span>
+<span class="cm">-- fields &#39;filtered&#39; and &#39;children&#39; cannot be used as nodes parameters</span>
+
+<span class="cm">*/</span>
+
+<span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">global</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">__version</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">monkey</span> <span class="o">=</span> <span class="p">{};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>/////////////////////////////////////////////////////////////////////////
+                          TREE CREATION                               //
+/////////////////////////////////////////////////////////////////////////</p>             </td>             <td class="code">               <div class="highlight"><pre>    </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>Creates a new tree and copies data in it. Initial data is not changed.
+Uses idColumn to define hierarchy.
+Returns new tree.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nx">monkey</span><span class="p">.</span><span class="nx">createTree</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">newTree</span><span class="p">;</span>
+        
+        <span class="nx">assertList</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="s1">&#39;createTree&#39;</span><span class="p">);</span>
+        <span class="nx">assertString</span><span class="p">(</span><span class="nx">idColumn</span><span class="p">,</span> <span class="s1">&#39;createTree&#39;</span><span class="p">);</span>
+        
+        <span class="nx">newTree</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Tree</span><span class="p">(</span><span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+        
+        <span class="nx">data</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">newNode</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">newTree</span><span class="p">.</span><span class="nx">insertNode</span><span class="p">(</span><span class="nx">newNode</span><span class="p">);</span>
+        <span class="p">});</span>
+        
+        <span class="k">return</span> <span class="nx">newTree</span><span class="p">;</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>Creates new tree. IdColumn is name of attribute with id of node,
+parentColumn is optional, it is name of attribute specifying parent node.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">Tree</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">root</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">rootNode</span><span class="p">;</span>
+        <span class="p">};</span>
+        <span class="kd">var</span> <span class="nx">isRoot</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">id</span><span class="p">;</span>
+            
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">elem</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+            <span class="nx">id</span> <span class="o">=</span> <span class="p">(</span><span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">))</span> <span class="o">?</span> <span class="nx">elem</span> <span class="o">:</span> <span class="nx">elem</span><span class="p">.</span><span class="nx">id</span><span class="p">;</span>
+            
+            <span class="k">return</span> <span class="nx">id</span> <span class="o">===</span> <span class="nx">root</span><span class="p">().</span><span class="nx">id</span><span class="p">;</span>
+        <span class="p">};</span>
+        <span class="kd">var</span> <span class="nx">rootNode</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">rootData</span> <span class="o">=</span> <span class="p">{};</span>
+        <span class="kd">var</span> <span class="nx">idColumn</span> <span class="o">=</span> <span class="nx">idColumn</span> <span class="o">||</span> <span class="s1">&#39;id&#39;</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">idMap</span> <span class="o">=</span> <span class="p">{};</span>
+        
+        <span class="nx">rootData</span> <span class="o">=</span> <span class="p">{};</span>
+        <span class="nx">rootData</span><span class="p">[</span><span class="nx">idColumn</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;__root__&#39;</span><span class="p">;</span>
+        <span class="nx">rootNode</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Node</span><span class="p">(</span><span class="nx">rootData</span><span class="p">,</span> <span class="kc">undefined</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+        
+        <span class="k">return</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>Inserts value into this tree. Finds direct parent of a new node
+by comparing id. If such node is not in tree, does not insert node.
+If new node should be inserted in place where exists removed node,
+then removed node is replaced with the new node.
+Returns tree after operation.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">insertNode</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="nx">isFiltered</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="nx">value</span><span class="p">[</span><span class="nx">idColumn</span><span class="p">];</span>
+                <span class="kd">var</span> <span class="nx">parentId</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">parentNode</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">newNode</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">isFiltered</span> <span class="o">=</span> <span class="nx">isFiltered</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+                
+                <span class="nx">parentId</span> <span class="o">=</span> <span class="p">(</span><span class="o">!!</span><span class="nx">parentColumn</span><span class="p">)</span> <span class="o">?</span> <span class="nx">value</span><span class="p">[</span><span class="nx">parentColumn</span><span class="p">]</span> <span class="o">:</span> <span class="nx">getParentId</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">parentId</span> <span class="o">===</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>    <span class="nx">parentId</span> <span class="o">=</span> <span class="s1">&#39;__root__&#39;</span><span class="p">;</span>
+                <span class="nx">parentNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getNode</span><span class="p">(</span><span class="nx">parentId</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">parentNode</span><span class="p">)</span> <span class="k">return</span> <span class="k">this</span><span class="p">;</span>        
+                
+                <span class="nx">newNode</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Node</span><span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="nx">parentNode</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">,</span> <span class="nx">isFiltered</span><span class="p">);</span>
+                <span class="nx">parentNode</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">newNode</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">);</span>
+                
+                <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <p>Removes node and all his descendants from this tree. Will not remove the root node.
+Returns tree after node removal.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">removeNode</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">parentNode</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">childNodes</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">node</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;removeNode&#39;</span><span class="p">)</span> <span class="o">:</span> <span class="nx">assertNodeInTree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;removeNode&#39;</span><span class="p">);</span>
+                
+                <span class="nx">parentNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">parentNode</span><span class="p">)</span> <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+                
+                <span class="nx">node</span> <span class="o">=</span> <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">getNode</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">:</span> <span class="nx">elem</span><span class="p">;</span>
+                <span class="nx">parentNode</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+                
+                <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>Finds node with specified id and returns it.
+If copy is set to false(default value), reference is returned, otherwise
+returns copy of parent without tree hierarchy info(parent and children).
+If node is not in the tree, undefined will be returned.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">getNode</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>    
+                <span class="kd">var</span> <span class="nx">node</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">realId</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">copy</span> <span class="o">=</span> <span class="nx">copy</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+
+                <span class="nx">assertId</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="s1">&#39;getNode&#39;</span><span class="p">);</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="nx">id</span> <span class="o">===</span> <span class="s1">&#39;__root__&#39;</span><span class="p">)</span> <span class="k">return</span> <span class="nx">root</span><span class="p">();</span>
+                
+                <span class="nx">realId</span> <span class="o">=</span> <span class="nx">idMap</span><span class="p">[</span><span class="nx">id</span><span class="p">];</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">realId</span><span class="p">)</span> <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                
+                <span class="nx">node</span> <span class="o">=</span> <span class="nx">root</span><span class="p">();</span>
+                <span class="k">while</span> <span class="p">(</span><span class="o">!!</span><span class="nx">node</span> <span class="o">&amp;&amp;</span> <span class="nx">node</span><span class="p">.</span><span class="nx">id</span> <span class="o">!==</span> <span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">node</span> <span class="o">=</span> <span class="nx">getChild</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">realId</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">);</span>
+                <span class="p">}</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="o">!!</span><span class="nx">node</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="nx">copy</span><span class="p">)</span> <span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="o">:</span> <span class="nx">node</span><span class="p">;</span>
+                <span class="k">else</span>
+                    <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <p>Returns parent node of element which is a node or a node's id.
+If copy is set to false(default value), reference is returned, otherwise
+returns copy of parent without tree hierarchy info(parent and children).</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">parent</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">node</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">copy</span> <span class="o">=</span> <span class="nx">copy</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">);</span>
+                    
+                    <span class="nx">node</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getNode</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="nx">assertNode</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                    
+                    <span class="nx">node</span> <span class="o">=</span> <span class="nx">elem</span><span class="p">;</span>
+                <span class="p">}</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="o">!!</span><span class="nx">node</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="nx">copy</span><span class="p">)</span> <span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">parent</span><span class="p">)</span> <span class="o">:</span> <span class="nx">node</span><span class="p">.</span><span class="nx">parent</span><span class="p">;</span>
+                <span class="k">else</span>
+                    <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-9">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-9">&#182;</a>               </div>               <p>Returns the root node of this tree.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">root</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">rootNode</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-10">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-10">&#182;</a>               </div>               <p>Checks if elem(node or node's id) specifies the root node of this tree.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">isRoot</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="p">(</span><span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">))</span> <span class="o">?</span> <span class="nx">elem</span> <span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                
+                <span class="k">return</span> <span class="nx">id</span> <span class="o">===</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span> <span class="nx">root</span><span class="p">()</span> <span class="p">);</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-11">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-11">&#182;</a>               </div>               <p>Returns true if node didn't pass filtration, otherwise false.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">isNodeFiltered</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">node</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;isNodeFiltered&#39;</span><span class="p">)</span> <span class="o">:</span>
+                                 <span class="nx">assertNode</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="s1">&#39;isNodeFiltered&#39;</span><span class="p">);</span>
+                
+                <span class="nx">node</span> <span class="o">=</span> <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">getNode</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span> <span class="o">:</span> <span class="nx">elem</span><span class="p">;</span>
+                
+                <span class="k">return</span> <span class="p">(</span><span class="o">!!</span><span class="nx">node</span><span class="p">)</span> <span class="o">?</span> <span class="nx">node</span><span class="p">[</span><span class="s1">&#39;filtered&#39;</span><span class="p">]</span> <span class="o">:</span> <span class="kc">false</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-12">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-12">&#182;</a>               </div>               <p>Checks if ancestorNode is an ancestor of childNode.
+Returns true if yes, otherwise false.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">isAncestor</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">ancestorNode</span><span class="p">,</span> <span class="nx">childNode</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">parentNode</span><span class="p">;</span>
+                
+                <span class="nx">assertNode</span><span class="p">(</span><span class="nx">ancestorNode</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="s1">&#39;isAncestor&#39;</span><span class="p">);</span>
+                <span class="nx">assertNode</span><span class="p">(</span><span class="nx">childNode</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="s1">&#39;isAncestor&#39;</span><span class="p">);</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="nx">isRoot</span><span class="p">(</span><span class="nx">ancestorNode</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="o">!</span><span class="nx">isRoot</span><span class="p">(</span><span class="nx">childNode</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">isRoot</span><span class="p">(</span><span class="nx">childNode</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+                <span class="p">}</span>
+                
+                <span class="nx">parentNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">childNode</span><span class="p">);</span>
+                <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="nx">isRoot</span><span class="p">(</span><span class="nx">parentNode</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">ancestorNode</span><span class="p">)</span> <span class="o">===</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">parentNode</span><span class="p">))</span> <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+                    <span class="nx">parentNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">parentNode</span><span class="p">);</span>
+                <span class="p">}</span>
+                
+                <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-13">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-13">&#182;</a>               </div>               <p>Returns left sibling of node specified by elem(node or its id).
+If the node has no left sibling, return undefined.
+If copy is set to false(default value), reference is returned, otherwise
+returns copy of left sibling node without tree hierarchy info(parent and children).</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">leftSibling</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">siblingsNodes</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">i</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">last</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">id</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">copy</span> <span class="o">=</span> <span class="nx">copy</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;leftSibling&#39;</span><span class="p">)</span> <span class="o">:</span> <span class="nx">assertNodeInTree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;leftSibling&#39;</span><span class="p">);</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="nx">isRoot</span><span class="p">(</span><span class="nx">elem</span><span class="p">))</span> <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                
+                <span class="nx">id</span> <span class="o">=</span> <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">elem</span> <span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                <span class="nx">parentNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">parentNode</span><span class="p">)</span> <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                
+                <span class="nx">siblingsNodes</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">children</span><span class="p">(</span><span class="nx">parentNode</span><span class="p">);</span>
+                <span class="nx">last</span> <span class="o">=</span> <span class="nx">siblingsNodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+                <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">last</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">siblingsNodes</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">===</span> <span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">siblingsNodes</span><span class="p">[</span><span class="nx">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]);</span>
+                        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                            <span class="k">return</span> <span class="nx">siblingsNodes</span><span class="p">[</span><span class="nx">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+                
+                <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-14">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-14">&#182;</a>               </div>               <p>Returns right sibling of node specified by elem(node or its id).
+If the node has no right sibling, return undefined.
+If copy is set to false(default value), reference is returned, otherwise
+returns copy of right sibling node without tree hierarchy info(parent and children).</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">rightSibling</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">parentNode</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">siblingsNodes</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">i</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">nextToLast</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">id</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">copy</span> <span class="o">=</span> <span class="nx">copy</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;leftSibling&#39;</span><span class="p">)</span> <span class="o">:</span> <span class="nx">assertNodeInTree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;leftSibling&#39;</span><span class="p">);</span>
+                
+                <span class="k">if</span> <span class="p">(</span> <span class="nx">isRoot</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">)</span> <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                
+                <span class="nx">id</span> <span class="o">=</span> <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">elem</span> <span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                <span class="nx">parentNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">parentNode</span><span class="p">)</span> <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                
+                <span class="nx">siblingsNodes</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">children</span><span class="p">(</span><span class="nx">parentNode</span><span class="p">);</span>
+                <span class="nx">nextToLast</span> <span class="o">=</span> <span class="nx">siblingsNodes</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">nextToLast</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">siblingsNodes</span><span class="p">[</span><span class="nx">i</span><span class="p">])</span> <span class="o">===</span> <span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">siblingsNodes</span><span class="p">[</span><span class="nx">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]);</span>
+                        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                            <span class="k">return</span> <span class="nx">siblingsNodes</span><span class="p">[</span><span class="nx">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">];</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+                
+                <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-15">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-15">&#182;</a>               </div>               <p>Returns sibling of node specified by elem(node or its id),
+sibling is specified by number which is number of it on
+his parent's list. If such a node can not be found, returns undefined.
+If copy is set to false(default value), reference is returned, otherwise
+returns copy of sibling node without tree hierarchy info(parent and children).</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">sibling</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="nx">siblingNr</span><span class="p">,</span> <span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">siblingsNodes</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">copy</span> <span class="o">=</span> <span class="nx">copy</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">parentNode</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;sibling&#39;</span><span class="p">)</span> <span class="o">:</span> <span class="nx">assertNodeInTree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;sibling&#39;</span><span class="p">);</span>
+                <span class="nx">assertNumber</span><span class="p">(</span><span class="nx">siblingNr</span><span class="p">,</span> <span class="s1">&#39;sibling&#39;</span><span class="p">);</span>
+                
+                <span class="k">if</span> <span class="p">(</span> <span class="nx">isRoot</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">)</span> <span class="k">return</span> <span class="p">(</span><span class="nx">siblingNr</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">root</span><span class="p">()</span> <span class="o">:</span> <span class="kc">undefined</span><span class="p">;</span>
+                
+                <span class="nx">parentNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">parentNode</span><span class="p">)</span> <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                
+                <span class="nx">siblingsNodes</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">children</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">elem</span><span class="p">));</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="nx">siblingNr</span> <span class="o">&amp;&amp;</span> <span class="nx">siblingNr</span> <span class="o">&lt;</span> <span class="nx">siblingsNodes</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">siblingsNodes</span><span class="p">[</span><span class="nx">siblingNr</span><span class="p">]);</span>
+                    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                        <span class="k">return</span> <span class="nx">siblingsNodes</span><span class="p">[</span><span class="nx">siblingNr</span><span class="p">];</span>
+                    <span class="p">}</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-16">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-16">&#182;</a>               </div>               <p>Returns children nodes of a node specified by elem(node or its id).
+If copy is set to false(default value), references are returned, otherwise
+returns copies of nodes, each copy without tree hierarchy info(parent and children).</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">children</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">node</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">copy</span> <span class="o">=</span> <span class="o">!!</span><span class="nx">copy</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;children&#39;</span><span class="p">)</span> <span class="o">:</span> <span class="nx">assertNode</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;children&#39;</span><span class="p">);</span>
+                
+                <span class="nx">node</span> <span class="o">=</span> <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">getNode</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">:</span> <span class="nx">elem</span><span class="p">;</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="o">!!</span><span class="nx">node</span><span class="p">)</span> <span class="o">?</span> <span class="nx">node</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">get</span><span class="p">().</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">childNode</span><span class="p">)</span> <span class="p">{</span>
+                                          <span class="k">return</span> <span class="nx">deepCopy</span><span class="p">(</span><span class="nx">childNode</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+                                      <span class="p">})</span> <span class="o">:</span> <span class="p">[];</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="o">!!</span><span class="nx">node</span><span class="p">)</span> <span class="o">?</span> <span class="nx">node</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">get</span><span class="p">()</span> <span class="o">:</span> <span class="p">[];</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-17">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-17">&#182;</a>               </div>               <p>Return subtree which root is node specified by elem(node or its id).
+If copy is set to false(default value), reference is returned, otherwise
+returns new tree with nodes from subtree and changed ids.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">subtree</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">copySubtree</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">srcTree</span><span class="p">,</span> <span class="nx">dstTree</span><span class="p">,</span> <span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">dstTree</span><span class="p">.</span><span class="nx">insertNode</span><span class="p">(</span><span class="nx">srcTree</span><span class="p">.</span><span class="nx">value</span><span class="p">(</span><span class="nx">node</span><span class="p">),</span> <span class="nx">node</span><span class="p">[</span><span class="s1">&#39;filtered&#39;</span><span class="p">]);</span>
+                    
+                    <span class="nx">srcTree</span><span class="p">.</span><span class="nx">children</span><span class="p">(</span><span class="nx">node</span><span class="p">).</span><span class="nx">forEach</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">childNode</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="nx">copySubtree</span><span class="p">(</span><span class="nx">srcTree</span><span class="p">,</span> <span class="nx">dstTree</span><span class="p">,</span> <span class="nx">childNode</span><span class="p">);</span>
+                    <span class="p">});</span>
+                    </pre></div>             </td>           </tr>                               <tr id="section-18">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-18">&#182;</a>               </div>               <p>must be done after inserting his children</p>             </td>             <td class="code">               <div class="highlight"><pre>                    <span class="k">if</span> <span class="p">(</span><span class="nx">srcTree</span><span class="p">.</span><span class="nx">isNodeFiltered</span><span class="p">(</span><span class="nx">node</span><span class="p">))</span> <span class="p">{</span>
+                        <span class="nx">node</span><span class="p">.</span><span class="nx">filtered</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">};</span>
+                
+                <span class="kd">var</span> <span class="nx">copy</span> <span class="o">=</span> <span class="nx">copy</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">newTree</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">subtreeNode</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;subtree&#39;</span><span class="p">)</span> <span class="o">:</span> <span class="nx">assertNodeInTree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;subtree&#39;</span><span class="p">);</span>
+                <span class="nx">subtreeNode</span> <span class="o">=</span> <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">getNode</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">:</span> <span class="nx">elem</span><span class="p">;</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">subtreeNode</span><span class="p">)</span> <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">copy</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nx">subtreeNode</span><span class="p">;</span>
+                <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                    <span class="nx">newTree</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Tree</span><span class="p">(</span><span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+                    <span class="nx">copySubtree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">newTree</span><span class="p">,</span> <span class="nx">subtreeNode</span><span class="p">);</span>
+                    
+                    <span class="k">return</span> <span class="nx">newTree</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-19">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-19">&#182;</a>               </div>               <p>Returns value of node specified by elem(node or its id).</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">value</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">valueCopy</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">node</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">)</span> <span class="o">:</span> <span class="nx">assertNodeInTree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">);</span>
+                
+                <span class="nx">node</span> <span class="o">=</span> <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">getNode</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">:</span> <span class="nx">elem</span><span class="p">;</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">node</span><span class="p">)</span> <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+
+                <span class="nx">valueCopy</span> <span class="o">=</span> <span class="nx">deepCopy</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+                
+                <span class="k">return</span> <span class="nx">valueCopy</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-20">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-20">&#182;</a>               </div>               <p>Returns next node of node specified by elem(node or its id). Next node is chosen
+according to parent-left-right traversing direction. If it is the last node,
+returns undefined. </p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">next</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">getNextNode</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">tree</span><span class="p">,</span> <span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="kd">var</span> <span class="nx">childNodes</span><span class="p">;</span>
+                    <span class="kd">var</span> <span class="nx">rightSiblingNode</span><span class="p">;</span>
+                    <span class="kd">var</span> <span class="nx">ancestorNode</span><span class="p">;</span>
+                    
+                    <span class="nx">childNodes</span> <span class="o">=</span> <span class="nx">tree</span><span class="p">.</span><span class="nx">children</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nx">childNodes</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="k">return</span> <span class="nx">childNodes</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+                    
+                    <span class="nx">rightSiblingNode</span> <span class="o">=</span> <span class="nx">tree</span><span class="p">.</span><span class="nx">rightSibling</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                    <span class="k">if</span> <span class="p">(</span> <span class="o">!!</span><span class="nx">rightSiblingNode</span> <span class="p">)</span> <span class="k">return</span> <span class="nx">rightSiblingNode</span><span class="p">;</span>
+                    
+                    <span class="k">if</span> <span class="p">(</span> <span class="nx">isRoot</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">)</span> <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                    
+                    <span class="nx">ancestorNode</span> <span class="o">=</span> <span class="nx">tree</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                    <span class="k">while</span> <span class="p">(</span> <span class="o">!!</span><span class="nx">ancestorNode</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">isRoot</span><span class="p">(</span><span class="nx">ancestorNode</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+                        <span class="nx">rightSiblingNode</span> <span class="o">=</span> <span class="nx">tree</span><span class="p">.</span><span class="nx">rightSibling</span><span class="p">(</span><span class="nx">ancestorNode</span><span class="p">);</span>
+                        <span class="k">if</span> <span class="p">(</span> <span class="o">!!</span><span class="nx">rightSiblingNode</span> <span class="p">)</span> <span class="k">return</span> <span class="nx">rightSiblingNode</span><span class="p">;</span>
+                        <span class="nx">ancestorNode</span> <span class="o">=</span> <span class="nx">tree</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">ancestorNode</span><span class="p">);</span>
+                    <span class="p">}</span>
+                    
+                    <span class="k">return</span> <span class="kc">undefined</span><span class="p">;</span>
+                <span class="p">};</span>
+                <span class="kd">var</span> <span class="nx">nextNode</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;next&#39;</span><span class="p">)</span> <span class="o">:</span> <span class="nx">assertNode</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;next&#39;</span><span class="p">);</span>
+                
+                <span class="nx">nextNode</span> <span class="o">=</span> <span class="nx">getNextNode</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">elem</span><span class="p">);</span>
+                
+                <span class="k">return</span> <span class="nx">nextNode</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-21">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-21">&#182;</a>               </div>               <p>Iterates this tree and calls fun function for each node,
+function gets one argument: actual node. Returns the tree.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">forEach</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fun</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">nextNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="nx">root</span><span class="p">());</span>
+                <span class="kd">var</span> <span class="nx">copiedNode</span><span class="p">;</span>
+                
+                <span class="k">while</span> <span class="p">(</span><span class="o">!!</span><span class="nx">nextNode</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">fun</span><span class="p">(</span><span class="nx">nextNode</span><span class="p">);</span>
+                    <span class="nx">nextNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="nx">nextNode</span><span class="p">);</span>
+                <span class="p">}</span>
+                
+                <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-22">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-22">&#182;</a>               </div>               <p>Equivalent of map for lists. Creates new tree and inserts into it nodes
+that are results of passed function fun, which gets actual node as argument.
+Returns new tree.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">map</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fun</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">nextNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="nx">root</span><span class="p">());</span>
+                <span class="kd">var</span> <span class="nx">copiedNode</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">modifiedNode</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">copiedTree</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Tree</span><span class="p">(</span><span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+                
+                <span class="k">while</span> <span class="p">(</span><span class="o">!!</span><span class="nx">nextNode</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">copiedNode</span> <span class="o">=</span> <span class="nx">deepCopy</span><span class="p">(</span><span class="nx">nextNode</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+                    <span class="nx">modifiedNode</span> <span class="o">=</span> <span class="nx">fun</span><span class="p">(</span><span class="nx">copiedNode</span><span class="p">);</span>
+                    <span class="nx">copiedTree</span><span class="p">.</span><span class="nx">insertNode</span><span class="p">(</span><span class="nx">modifiedNode</span><span class="p">,</span> <span class="nx">modifiedNode</span><span class="p">[</span><span class="s1">&#39;filtered&#39;</span><span class="p">]);</span>
+                    <span class="nx">nextNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="nx">nextNode</span><span class="p">);</span>
+                <span class="p">}</span>
+                
+                <span class="k">return</span> <span class="nx">copiedTree</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-23">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-23">&#182;</a>               </div>               <p>Returns new tree with filtered nodes.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">filter</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fun</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">nextNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="nx">root</span><span class="p">());</span>
+                <span class="kd">var</span> <span class="nx">copiedNode</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">copiedTree</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Tree</span><span class="p">(</span><span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+                <span class="kd">var</span> <span class="nx">isFiltered</span><span class="p">;</span>
+                
+                <span class="k">while</span> <span class="p">(</span><span class="o">!!</span><span class="nx">nextNode</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">copiedNode</span> <span class="o">=</span> <span class="nx">deepCopy</span><span class="p">(</span><span class="nx">nextNode</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+                    <span class="nx">isFiltered</span> <span class="o">=</span> <span class="o">!</span><span class="nx">fun</span><span class="p">(</span><span class="nx">copiedNode</span><span class="p">);</span>
+                    <span class="nx">copiedTree</span><span class="p">.</span><span class="nx">insertNode</span><span class="p">(</span><span class="nx">copiedNode</span><span class="p">,</span> <span class="o">!!</span><span class="nx">isFiltered</span><span class="p">);</span>
+                    <span class="nx">nextNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="nx">nextNode</span><span class="p">);</span>
+                <span class="p">}</span>
+                
+                <span class="k">return</span> <span class="nx">copiedTree</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-24">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-24">&#182;</a>               </div>               <p>Returns number of nodes in subtree with root specified by elem(node or its id).</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">countSubtree</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">elem</span> <span class="o">=</span> <span class="nx">elem</span> <span class="o">||</span> <span class="nx">root</span><span class="p">();</span>
+                <span class="kd">var</span> <span class="nx">subtreeRoot</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">counter</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">nextNode</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;countSubtree&#39;</span><span class="p">)</span> <span class="o">:</span> <span class="nx">assertNodeInTree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;countSubtree&#39;</span><span class="p">);</span>
+                
+                <span class="nx">subtreeRoot</span> <span class="o">=</span> <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="k">this</span><span class="p">.</span><span class="nx">getNode</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">:</span> <span class="nx">elem</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">subtreeRoot</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+                
+                <span class="nx">counter</span> <span class="o">=</span> <span class="nx">isRoot</span><span class="p">(</span><span class="nx">subtreeRoot</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="nx">nextNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="nx">subtreeRoot</span><span class="p">);</span>
+                
+                <span class="k">while</span> <span class="p">(</span><span class="o">!!</span><span class="nx">nextNode</span> <span class="o">&amp;&amp;</span> <span class="k">this</span><span class="p">.</span><span class="nx">isAncestor</span><span class="p">(</span><span class="nx">subtreeRoot</span><span class="p">,</span> <span class="nx">nextNode</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="nx">counter</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+                    <span class="nx">nextNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">next</span><span class="p">(</span><span class="nx">nextNode</span><span class="p">);</span>
+                <span class="p">}</span>
+                
+                <span class="k">return</span> <span class="nx">counter</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-25">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-25">&#182;</a>               </div>               <p>Returns number of nodes on level of elem(node or its id).</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">countLevel</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">siblings</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">parentNode</span><span class="p">;</span>
+                
+                <span class="nx">isIdType</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="o">?</span> <span class="nx">assertId</span><span class="p">(</span><span class="nx">elem</span><span class="p">,</span> <span class="s1">&#39;countLevel&#39;</span><span class="p">)</span> <span class="o">:</span>
+                                 <span class="nx">assertNodeInTree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">nodeId</span><span class="p">(</span><span class="nx">elem</span><span class="p">),</span> <span class="kc">false</span><span class="p">,</span> <span class="s1">&#39;countLevel&#39;</span><span class="p">);</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="nx">isRoot</span><span class="p">(</span><span class="nx">elem</span><span class="p">))</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+                
+                <span class="nx">parentNode</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">parent</span><span class="p">(</span><span class="nx">elem</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">parentNode</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+                <span class="nx">siblings</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">children</span><span class="p">(</span><span class="nx">parentNode</span><span class="p">);</span>
+                
+                <span class="k">return</span> <span class="nx">siblings</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-26">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-26">&#182;</a>               </div>               <p>Returns id of a node.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">nodeId</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">node</span><span class="p">.</span><span class="nx">id</span><span class="p">;</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-27">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-27">&#182;</a>               </div>               <p>Returns copied tree.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">copy</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nx">monkey</span><span class="p">.</span><span class="nx">createTree</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">toList</span><span class="p">(),</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+            <span class="p">},</span>
+            </pre></div>             </td>           </tr>                               <tr id="section-28">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-28">&#182;</a>               </div>               <p>Copies nodes' values(no hierarchy information) from this tree to
+a list in order specified by next function.
+Returns created list.</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">toList</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">saveInList</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">node</span><span class="p">[</span><span class="s1">&#39;filtered&#39;</span><span class="p">])</span>
+                        <span class="nx">list</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">nodeToValue</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">));</span>
+                <span class="p">};</span>
+                
+                <span class="kd">var</span> <span class="nx">list</span> <span class="o">=</span> <span class="p">[];</span>
+                
+                <span class="k">this</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">saveInList</span><span class="p">);</span>
+                
+                <span class="k">return</span> <span class="nx">list</span><span class="p">;</span>
+            <span class="p">}</span>
+        
+        <span class="p">};</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-29">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-29">&#182;</a>               </div>               <p>Creates new node in tree. Value will be inserted, parentNode will be parent
+of new node, idMap is map: userId -> innerId, idColumn specifies id,
+parentNode(optional) is id of node's parent, isFiltered specifies
+if node is filtered.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">Node</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="nx">parentNode</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">,</span> <span class="nx">isFiltered</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">property</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">valueCopy</span> <span class="o">=</span> <span class="nx">deepCopy</span><span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+        
+        <span class="kd">var</span> <span class="nx">_id</span> <span class="o">=</span> <span class="nx">valueCopy</span><span class="p">[</span><span class="nx">idColumn</span><span class="p">];</span>
+        <span class="kd">var</span> <span class="nx">_parent</span> <span class="o">=</span> <span class="nx">parentNode</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">_filtered</span> <span class="o">=</span> <span class="nx">isFiltered</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">_children</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Children</span><span class="p">(</span><span class="nx">_id</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">);</span>
+        
+        <span class="nb">Object</span><span class="p">.</span><span class="nx">defineProperty</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s1">&#39;parent&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="nx">get</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">_parent</span><span class="p">;</span> <span class="p">}</span>
+        <span class="p">});</span>
+        <span class="nb">Object</span><span class="p">.</span><span class="nx">defineProperty</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s1">&#39;children&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="nx">get</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">_children</span><span class="p">;</span> <span class="p">}</span>
+        <span class="p">});</span>
+        <span class="nb">Object</span><span class="p">.</span><span class="nx">defineProperty</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s1">&#39;filtered&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="nx">get</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">_filtered</span><span class="p">;</span> <span class="p">}</span>
+            <span class="p">,</span><span class="nx">set</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">newValue</span><span class="p">)</span> <span class="p">{</span> <span class="nx">_filtered</span> <span class="o">=</span> <span class="o">!!</span><span class="nx">newValue</span><span class="p">;</span> <span class="p">}</span>
+        <span class="p">});</span>
+        <span class="nb">Object</span><span class="p">.</span><span class="nx">defineProperty</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="nx">get</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">_id</span><span class="p">;</span> <span class="p">},</span>
+            <span class="nx">set</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">newValue</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">idMap</span><span class="p">[</span><span class="nx">newValue</span><span class="p">])</span> <span class="p">{</span>
+                    <span class="nx">idMap</span><span class="p">[</span><span class="nx">newValue</span><span class="p">]</span> <span class="o">=</span> <span class="nx">idMap</span><span class="p">[</span><span class="nx">_id</span><span class="p">];</span>
+                    <span class="k">delete</span> <span class="nx">idMap</span><span class="p">[</span><span class="nx">_id</span><span class="p">];</span>
+                    <span class="nx">_id</span> <span class="o">=</span> <span class="nx">newValue</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">});</span>
+        
+        <span class="k">for</span> <span class="p">(</span><span class="nx">property</span> <span class="k">in</span> <span class="nx">valueCopy</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">valueCopy</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">property</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">property</span> <span class="o">!==</span> <span class="s1">&#39;parent&#39;</span> <span class="o">&amp;&amp;</span>
+                <span class="nx">property</span> <span class="o">!==</span> <span class="s1">&#39;children&#39;</span> <span class="o">&amp;&amp;</span> <span class="nx">property</span> <span class="o">!==</span> <span class="s1">&#39;id&#39;</span> <span class="o">&amp;&amp;</span> <span class="nx">property</span> <span class="o">!==</span> <span class="s1">&#39;filtered&#39;</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">this</span><span class="p">[</span><span class="nx">property</span><span class="p">]</span> <span class="o">=</span> <span class="nx">valueCopy</span><span class="p">[</span><span class="nx">property</span><span class="p">];</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="o">!!</span><span class="nx">parentNode</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">parentNode</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">idMap</span><span class="p">[</span><span class="s1">&#39;__root__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-30">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-30">&#182;</a>               </div>               <p>Children wraps list of children nodes.
+parentId is userId of parent node, idMap is map: userId -> innerId,
+data is list of children nodes.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">Children</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">parentId</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">generateInnerId</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">parentId</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">lastChild</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">lastChildId</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">idParts</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">len</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">idMap</span> <span class="o">=</span> <span class="nx">idMap</span><span class="p">;</span>
+            
+            <span class="nx">len</span> <span class="o">=</span> <span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+            
+            <span class="k">if</span> <span class="p">(</span><span class="nx">len</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span><span class="nx">idMap</span><span class="p">[</span><span class="nx">parentId</span><span class="p">]</span> <span class="o">===</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">?</span> <span class="s1">&#39;0&#39;</span> <span class="o">:</span> <span class="nx">idMap</span><span class="p">[</span><span class="nx">parentId</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;-0&#39;</span><span class="p">;</span>
+            
+            <span class="nx">lastChild</span> <span class="o">=</span> <span class="nx">nodes</span><span class="p">[</span><span class="nx">len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
+            <span class="nx">lastChildId</span> <span class="o">=</span> <span class="nx">idMap</span><span class="p">[</span> <span class="nx">lastChild</span><span class="p">.</span><span class="nx">id</span> <span class="p">];</span>
+            <span class="nx">idParts</span> <span class="o">=</span> <span class="nx">lastChildId</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">);</span>
+            <span class="nx">idParts</span><span class="p">[</span><span class="nx">idParts</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">idParts</span><span class="p">[</span><span class="nx">idParts</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+            <span class="k">return</span> <span class="nx">idParts</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">);</span>
+        <span class="p">};</span>
+        <span class="kd">var</span> <span class="nx">nodes</span> <span class="o">=</span> <span class="p">[];</span>
+        <span class="kd">var</span> <span class="nx">i</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">len</span><span class="p">;</span>
+        
+        <span class="k">this</span><span class="p">.</span><span class="nx">add</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">idMap</span><span class="p">[</span><span class="nx">node</span><span class="p">.</span><span class="nx">id</span><span class="p">])</span> <span class="p">{</span>
+                <span class="nx">idMap</span><span class="p">[</span><span class="nx">node</span><span class="p">.</span><span class="nx">id</span><span class="p">]</span> <span class="o">=</span> <span class="nx">generateInnerId</span><span class="p">(</span><span class="nx">parentId</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">);</span>
+                <span class="nx">nodes</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">node</span><span class="p">);</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">node</span><span class="p">.</span><span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">removed</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+                        
+                        <span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">get</span><span class="p">().</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="nx">node</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">parentId</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">);</span>
+                            <span class="nx">e</span><span class="p">.</span><span class="nx">parent</span> <span class="o">=</span> <span class="nx">node</span><span class="p">;</span>
+                        <span class="p">});</span>
+                        <span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">parent</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+                        <span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">node</span><span class="p">;</span>
+                        <span class="k">break</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">remove</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">nodes</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">parent</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+                    <span class="nx">nodes</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">get</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">nr</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="nx">nr</span> <span class="o">===</span> <span class="kc">undefined</span><span class="p">)</span> <span class="o">?</span> <span class="nx">nodes</span> <span class="o">:</span> <span class="nx">nodes</span><span class="p">[</span><span class="nx">nr</span><span class="p">];</span>
+        <span class="p">};</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">length</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">nodes</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+        <span class="p">};</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="o">!!</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">assertList</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="s1">&#39;Children&#39;</span><span class="p">);</span>
+            <span class="nx">data</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">this</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">parentId</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">);</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+    <span class="p">};</span>
+    
+    </pre></div>             </td>           </tr>                               <tr id="section-31">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-31">&#182;</a>               </div>               <p>/////////////////////////////////////////////////////////////////////////
+                      TREE CREATION HELPER FUNCTIONS                  //
+/////////////////////////////////////////////////////////////////////////</p>             </td>             <td class="code">               <div class="highlight"><pre>    </pre></div>             </td>           </tr>                               <tr id="section-32">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-32">&#182;</a>               </div>               <p>Returns childNode with id = childId from node's children collection,
+idMap is map: userId -> treeId</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">getChild</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">childId</span><span class="p">,</span> <span class="nx">idMap</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">childrenList</span><span class="p">;</span>
+        
+        <span class="nx">assertNode</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="s1">&#39;getChild&#39;</span><span class="p">);</span>
+        <span class="nx">assertNonEmptyString</span><span class="p">(</span><span class="nx">childId</span><span class="p">,</span> <span class="s1">&#39;getChild&#39;</span><span class="p">);</span>
+        
+        <span class="nx">childrenList</span> <span class="o">=</span> <span class="nx">node</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">get</span><span class="p">().</span><span class="nx">filter</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">realId</span> <span class="o">=</span> <span class="nx">idMap</span><span class="p">[</span><span class="nx">e</span><span class="p">.</span><span class="nx">id</span><span class="p">];</span>
+            <span class="kd">var</span> <span class="nx">level</span> <span class="o">=</span> <span class="nx">count</span><span class="p">(</span><span class="nx">realId</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">);</span>
+            <span class="kd">var</span> <span class="nx">levelId</span> <span class="o">=</span> <span class="nx">getIdOnLevel</span><span class="p">(</span><span class="nx">childId</span><span class="p">,</span> <span class="nx">level</span><span class="p">);</span>
+            <span class="k">return</span> <span class="nx">realId</span> <span class="o">===</span> <span class="nx">levelId</span><span class="p">;</span>
+        <span class="p">});</span>
+        
+        <span class="k">return</span> <span class="p">(</span><span class="nx">childrenList</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">?</span> <span class="nx">childrenList</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">:</span> <span class="kc">undefined</span><span class="p">;</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-33">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-33">&#182;</a>               </div>               <p>Creates tree hierarchy with root node,
+idColumn is name of attribute with node's ids.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">createTreeData</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">idColumn</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">root</span> <span class="o">=</span> <span class="p">{};</span>
+        
+        <span class="nx">root</span><span class="p">[</span><span class="nx">idColumn</span><span class="p">]</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+        <span class="nx">root</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;root&#39;</span><span class="p">;</span>
+        <span class="nx">root</span><span class="p">[</span><span class="s1">&#39;children&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[];</span>
+        <span class="nx">root</span><span class="p">[</span><span class="s1">&#39;parent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">undefined</span><span class="p">;</span>
+        
+        <span class="k">return</span> <span class="p">{</span> <span class="s1">&#39;root&#39;</span><span class="o">:</span> <span class="nx">root</span> <span class="p">};</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-34">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-34">&#182;</a>               </div>               <p>/////////////////////////////////////////////////////////////////////////
+                     OTHER HELPER FUNCTIONS                           //
+/////////////////////////////////////////////////////////////////////////</p>             </td>             <td class="code">               <div class="highlight"><pre>    </pre></div>             </td>           </tr>                               <tr id="section-35">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-35">&#182;</a>               </div>               <p>Returns number of occurences of letter in string str.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">count</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">str</span><span class="p">,</span> <span class="nx">letter</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">counter</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">i</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">len</span><span class="p">;</span>
+        
+        <span class="nx">assertString</span><span class="p">(</span><span class="nx">str</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">);</span>
+        
+        <span class="nx">counter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="nx">len</span> <span class="o">=</span> <span class="nx">str</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+        
+        <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">len</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">str</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">===</span> <span class="nx">letter</span><span class="p">)</span> <span class="p">{</span>
+                <span class="o">++</span><span class="nx">counter</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="nx">counter</span><span class="p">;</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-36">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-36">&#182;</a>               </div>               <p>Returns id that will have the closest possible parent of node
+with id = id.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">getParentId</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">lastIndex</span> <span class="o">=</span> <span class="nx">id</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">);</span>
+        
+        <span class="k">return</span> <span class="p">(</span><span class="nx">lastIndex</span> <span class="o">!==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">?</span> <span class="nx">id</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">lastIndex</span><span class="p">)</span> <span class="o">:</span> <span class="s1">&#39;__root__&#39;</span><span class="p">;</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-37">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-37">&#182;</a>               </div>               <p>Returns id on specified level(returns id cut off in place when
+separator number level+1 starts, separator is "-")</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">getIdOnLevel</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">level</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">i</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">len</span><span class="p">;</span>
+        
+        <span class="nx">assertNonEmptyString</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="s1">&#39;getIdOnLevel&#39;</span><span class="p">);</span>
+        
+        <span class="nx">len</span> <span class="o">=</span> <span class="nx">id</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">len</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">id</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">===</span> <span class="s1">&#39;-&#39;</span><span class="p">)</span> <span class="p">{</span>
+                <span class="o">--</span><span class="nx">level</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">level</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="nx">id</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">i</span><span class="p">);</span>        
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-38">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-38">&#182;</a>               </div>               <p>Returns deep copy of value(with some changes for node).</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">deepCopy</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">property</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">objectCopy</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">arrayCopy</span><span class="p">;</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="nx">value</span> <span class="o">===</span> <span class="kc">undefined</span> <span class="o">||</span> <span class="nx">value</span> <span class="o">===</span> <span class="kc">null</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nx">value</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">value</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">!==</span> <span class="nb">Object</span> <span class="o">&amp;&amp;</span> <span class="nx">value</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">!==</span> <span class="nb">Array</span> <span class="o">&amp;&amp;</span>
+                 <span class="nx">value</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">!==</span> <span class="nx">Node</span> <span class="o">&amp;&amp;</span> <span class="nx">value</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">!==</span> <span class="nx">Children</span> <span class="o">&amp;&amp;</span>
+                 <span class="nx">value</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">!==</span> <span class="nx">Tree</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">value</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">value</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">===</span> <span class="nb">Array</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">arrayCopy</span> <span class="o">=</span> <span class="p">[];</span>
+            <span class="nx">value</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">arrayCopy</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">deepCopy</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">));</span>
+            <span class="p">});</span>
+            
+            <span class="k">return</span> <span class="nx">arrayCopy</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">objectCopy</span> <span class="o">=</span> <span class="p">{};</span>
+            <span class="k">for</span> <span class="p">(</span><span class="nx">property</span> <span class="k">in</span> <span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">value</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">property</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="nx">objectCopy</span><span class="p">[</span><span class="nx">property</span><span class="p">]</span> <span class="o">=</span> <span class="nx">deepCopy</span><span class="p">(</span><span class="nx">value</span><span class="p">[</span><span class="nx">property</span><span class="p">],</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">value</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">===</span> <span class="nx">Node</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">objectCopy</span><span class="p">[</span><span class="nx">idColumn</span><span class="p">]</span> <span class="o">=</span> <span class="nx">value</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">];</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!!</span><span class="nx">parentColumn</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nx">value</span><span class="p">[</span><span class="s1">&#39;parent&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">===</span> <span class="s1">&#39;__root__&#39;</span><span class="p">)</span>
+                        <span class="nx">objectCopy</span><span class="p">[</span><span class="nx">parentColumn</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+                    <span class="k">else</span>
+                        <span class="nx">objectCopy</span><span class="p">[</span><span class="nx">parentColumn</span><span class="p">]</span> <span class="o">=</span> <span class="nx">value</span><span class="p">[</span><span class="s1">&#39;parent&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">];</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="nx">objectCopy</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-39">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-39">&#182;</a>               </div>               <p>Returns true if elem can be id, otherwise false.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">isIdType</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elem</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">elem</span> <span class="o">!==</span> <span class="kc">undefined</span> <span class="o">&amp;&amp;</span> <span class="nx">elem</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">===</span> <span class="nb">String</span><span class="p">;</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-40">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-40">&#182;</a>               </div>               <p>Returns value of node, does not contain children collection and parent node.
+IdColumn(and parentColumn) is column with id in original data.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">nodeToValue</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">deepCopy</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">parentColumn</span><span class="p">);</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-41">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-41">&#182;</a>               </div>               <p>Sorts nodes by their ids, that are kept in idColumn attribute in each node.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">sortNodes</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">nodes</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">compareId</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id1</span><span class="p">,</span> <span class="nx">id2</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">i</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">idPart1</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">idPart2</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">minLength</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="nx">id1</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span> <span class="nx">id2</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+            
+            <span class="k">for</span> <span class="p">(</span><span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">minLength</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">idPart1</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">id1</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+                <span class="nx">idPart2</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">id2</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">idPart1</span> <span class="o">!==</span> <span class="nx">idPart2</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nx">idPart1</span> <span class="o">-</span> <span class="nx">idPart2</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="p">};</span>
+        
+        <span class="nx">assertList</span><span class="p">(</span><span class="nx">nodes</span><span class="p">,</span> <span class="s1">&#39;sortNodes&#39;</span><span class="p">);</span>
+        
+        <span class="nx">nodes</span><span class="p">.</span><span class="nx">sort</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">node1</span><span class="p">,</span> <span class="nx">node2</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">idNr1</span> <span class="o">=</span> <span class="nx">node1</span><span class="p">[</span><span class="nx">idColumn</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">);</span>
+            <span class="kd">var</span> <span class="nx">idNr2</span> <span class="o">=</span> <span class="nx">node2</span><span class="p">[</span><span class="nx">idColumn</span><span class="p">].</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">);</span>
+            
+            <span class="k">return</span> <span class="nx">compareId</span><span class="p">(</span><span class="nx">idNr1</span><span class="p">,</span> <span class="nx">idNr2</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="p">};</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-42">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-42">&#182;</a>               </div>               <p>/////////////////////////////////////////////////////////////////////////
+                           ASSERTIONS                                 //
+/////////////////////////////////////////////////////////////////////////</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">assertList</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">list</span><span class="p">,</span> <span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">list</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">!==</span> <span class="nb">Array</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="s1">&#39;assertList(list=&#39;</span> <span class="o">+</span> <span class="nx">list</span> <span class="o">+</span> <span class="s1">&#39;): &#39;</span> <span class="o">+</span> <span class="nx">msg</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    
+    <span class="kd">var</span> <span class="nx">assertString</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">str</span><span class="p">,</span> <span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">str</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">!==</span> <span class="nb">String</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="s1">&#39;assertString(str=&#39;</span> <span class="o">+</span> <span class="nx">str</span> <span class="o">+</span> <span class="s1">&#39;): &#39;</span> <span class="o">+</span> <span class="nx">msg</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    
+    <span class="kd">var</span> <span class="nx">assertNonEmptyString</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">str</span><span class="p">,</span> <span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">str</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">!==</span> <span class="nb">String</span> <span class="o">&amp;&amp;</span> <span class="nx">str</span> <span class="o">!==</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="s1">&#39;assertNonEmptyString(str=&#39;</span> <span class="o">+</span> <span class="nx">str</span> <span class="o">+</span> <span class="s1">&#39;): &#39;</span> <span class="o">+</span> <span class="nx">msg</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    
+    <span class="kd">var</span> <span class="nx">assertNumber</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">number</span><span class="p">,</span> <span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">number</span><span class="p">.</span><span class="nx">constructor</span> <span class="o">!=</span> <span class="nb">Number</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="s1">&#39;assertNumber(number=&#39;</span> <span class="o">+</span> <span class="nx">number</span> <span class="o">+</span> <span class="s1">&#39;): &#39;</span> <span class="o">+</span> <span class="nx">msg</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    
+    <span class="kd">var</span> <span class="nx">assertNodeInTree</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">tree</span><span class="p">,</span> <span class="nx">id</span><span class="p">,</span> <span class="nx">ignoreRemoved</span><span class="p">,</span> <span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">tree</span><span class="p">.</span><span class="nx">getNode</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">ignoreRemoved</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="s1">&#39;assertNodeInTree(id=&#39;</span> <span class="o">+</span> <span class="nx">id</span> <span class="o">+</span> <span class="s1">&#39;): &#39;</span> <span class="o">+</span> <span class="nx">msg</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    
+    <span class="kd">var</span> <span class="nx">assertNode</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">idColumn</span><span class="p">,</span> <span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="o">!</span><span class="nx">node</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">idColumn</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">node</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="s1">&#39;parent&#39;</span><span class="p">)</span> <span class="o">&amp;&amp;</span>
+             <span class="nx">assertList</span><span class="p">(</span><span class="nx">node</span><span class="p">[</span><span class="s1">&#39;children&#39;</span><span class="p">],</span> <span class="nx">msg</span> <span class="o">+</span> <span class="s1">&#39;-&gt;assertNode&#39;</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="s1">&#39;assertNode(idColumn=&#39;</span> <span class="o">+</span> <span class="nx">idColumn</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span> <span class="o">+</span> <span class="nx">msg</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    
+    <span class="kd">var</span> <span class="nx">assertId</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">id</span> <span class="o">!==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">assertNonEmptyString</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="s1">&#39;assertId( &#39;</span> <span class="o">+</span> <span class="nx">msg</span> <span class="o">+</span> <span class="s1">&#39; )&#39;</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    
+    <span class="kd">var</span> <span class="nx">assertRemoveType</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">type</span><span class="p">,</span> <span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">type</span> <span class="o">!==</span> <span class="s1">&#39;node&#39;</span> <span class="o">&amp;&amp;</span> <span class="nx">type</span> <span class="o">!==</span> <span class="s1">&#39;subtree&#39;</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="s1">&#39;assertRemoveType(type=&#39;</span> <span class="o">+</span> <span class="nx">type</span> <span class="o">+</span> <span class="s1">&#39;) &#39;</span> <span class="o">+</span> <span class="nx">msg</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+    
+    <span class="nx">global</span><span class="p">.</span><span class="nx">monkey</span> <span class="o">=</span> <span class="nx">monkey</span><span class="p">;</span>
+    
+<span class="p">})(</span><span class="k">this</span><span class="p">);</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

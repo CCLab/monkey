@@ -11,11 +11,8 @@ Form of created tree:
 -- id is in 'id' parameter
 -- is filtered is in 'filtered' parameter
 -- data in node is in other parameters
+-- fields 'filtered' and 'children' cannot be used as nodes parameters
 
-*/
-
-/*
-Monkey version with parent attribute in nodes.
 */
 
 (function(global) {
@@ -44,6 +41,8 @@ Monkey version with parent attribute in nodes.
         return newTree;
     };
     
+    // Creates new tree. IdColumn in name of attribute with node's id parameter,
+    // parentColumn is optional, it is name of attribute specifying parent node.
     var Tree = function(idColumn, parentColumn) {
         var root = function() {
             return rootNode;
@@ -408,9 +407,6 @@ Monkey version with parent attribute in nodes.
                 isIdType(elem) ? assertId(elem, 'next') : assertNode(this, this.nodeId(elem), false, 'next');
                 
                 nextNode = getNextNode(this, elem);
-                /*while (!!nextNode && this.isNodeFiltered(nextNode)) {
-                    nextNode = getNextNode(this, nextNode);
-                }*/
                 
                 return nextNode;
             },
@@ -541,7 +537,10 @@ Monkey version with parent attribute in nodes.
         };
     };
     
-    
+    // Creates new node in tree. Value will be inserted, parentNode will be parent
+    // of new node, idMap is map: userId -> innerId, idColumn specifies id,
+    // parentNode(optional) is id of node's parent, isFiltered specifies
+    // if node is filtered.
     var Node = function(value, parentNode, idMap, idColumn, parentColumn, isFiltered) {
         var property;
         var valueCopy = deepCopy(value, idColumn, parentColumn);
@@ -586,6 +585,9 @@ Monkey version with parent attribute in nodes.
         }
     };
     
+    // Children wraps list of children nodes.
+    // parentId is userId of parent node, idMap is map: userId -> innerId,
+    // data is list of children nodes.
     var Children = function(parentId, idMap, data) {
         var generateInnerId = function(parentId, idMap) {
             var lastChild;

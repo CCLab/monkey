@@ -41,7 +41,7 @@ Form of created tree:
         return newTree;
     };
     
-    // Creates new tree. IdColumn in name of attribute with node's id parameter,
+    // Creates new tree. IdColumn is name of attribute with id of node,
     // parentColumn is optional, it is name of attribute specifying parent node.
     var Tree = function(idColumn, parentColumn) {
         var root = function() {
@@ -69,7 +69,7 @@ Form of created tree:
             // by comparing id. If such node is not in tree, does not insert node.
             // If new node should be inserted in place where exists removed node,
             // then removed node is replaced with the new node.
-            // Returns tree after insertion.
+            // Returns tree after operation.
             insertNode: function(value, isFiltered) {
                 var id = value[idColumn];
                 var parentId;
@@ -133,7 +133,7 @@ Form of created tree:
                     return undefined;
             },
             
-            // Returns parent node of element being a node or a node's id.
+            // Returns parent node of element which is a node or a node's id.
             // If copy is set to false(default value), reference is returned, otherwise
             // returns copy of parent without tree hierarchy info(parent and children).
             parent: function(elem, copy) {
@@ -168,7 +168,7 @@ Form of created tree:
                 return id === this.nodeId( root() );
             },
             
-            // Returns true if node didn't pass filtration, otherwise false
+            // Returns true if node didn't pass filtration, otherwise false.
             isNodeFiltered: function(elem) {
                 var node;
                 
@@ -180,8 +180,8 @@ Form of created tree:
                 return (!!node) ? node['filtered'] : false;
             },
             
-            // Checks if ancestorNode is a ancestor of childNode.
-            // Returns true if yes, otheriwse false.
+            // Checks if ancestorNode is an ancestor of childNode.
+            // Returns true if yes, otherwise false.
             isAncestor: function(ancestorNode, childNode) {
                 var parentNode;
                 
@@ -411,8 +411,8 @@ Form of created tree:
                 return nextNode;
             },
             
-            // Iterates over this tree and calls fun function, which is given
-            // one argument: actual node. Returns the tree.
+            // Iterates this tree and calls fun function for each node,
+            // function gets one argument: actual node. Returns the tree.
             forEach: function(fun) {
                 var nextNode = this.next(root());
                 var copiedNode;
@@ -455,8 +455,6 @@ Form of created tree:
                     copiedNode = deepCopy(nextNode, idColumn, parentColumn);
                     isFiltered = !fun(copiedNode);
                     copiedTree.insertNode(copiedNode, !!isFiltered);
-                    copiedNode = this.getNode(copiedNode[idColumn]);
-                    //copiedNode['filtered'] = !!isFiltered;
                     nextNode = this.next(nextNode);
                 }
                 
@@ -508,14 +506,9 @@ Form of created tree:
                 return node.id;
             },
             
-            // Copies tree and returns copied instance.
+            // Returns copied tree.
             copy: function() {
-                //return monkey.createTree(this.toList(), idColumn, parentColumn);
-                var copy = this.map(function(node) {
-                    return node;
-                });
-                copy.constructor = Node;
-                return copy;
+                return new monkey.createTree(this.toList(), idColumn, parentColumn);
             },
             
             // Copies nodes' values(no hierarchy information) from this tree to
@@ -864,8 +857,12 @@ Form of created tree:
     };
     
     var assertId = function(id, msg) {
-        if (id !== null) {
-            assertNonEmptyString(id, 'assertId( ' + msg + ' )');
+        if (id !== null && id !== undefined) {
+            if (id.constructor !== String && id.constructor !== Number) {
+                throw 'assertId(id=' + id + ')' + msg;
+            }
+        } else {
+            throw 'assertId(id=' + id + ')' + msg;
         }
     };
     

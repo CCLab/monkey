@@ -14,6 +14,21 @@ Testing monkey.
         {'id': '1-1', 'name': 'salad', 'val': 5},
         {'id': '1-2', 'name': 'tomato', 'val': 6}
     ];
+    var data2 = [
+        {'id': '0', 'name': '0', 'val': 4},
+        {'id': '0-1', 'name': '0-1', 'val': 5},
+        {'id': '0-2', 'name': '0-2', 'val': 2},
+        {'id': '0-1-1', 'name': '0-1-1', 'val': 30},
+        {'id': '0-1-2', 'name': '0-1-2', 'val': 40},
+        {'id': '0-1-3', 'name': '0-1-3', 'val': 50},
+        {'id': '0-1-1-1', 'name': '0-1-1-1', 'val': 60}
+    ];
+    var ftree = monkey.createTree(data2, 'id');
+    var fitree = ftree.filter(function(node) {
+        return node['val'] > 10;
+    });
+    debugger;
+    
     var tree;
     var filteredTree;
     var filteredNodes;

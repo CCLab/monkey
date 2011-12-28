@@ -570,7 +570,56 @@ ModificationTest.prototype.testRemoveNode = function() {
     // bad node
     assertException(function() {
         tree.removeNode(badNode);
-    }, undefined);/**/
+    }, undefined);
+};
+
+ModificationTest.prototype.testUpdateSubtree = function() {
+    var simpleDataWithParent = [
+        {'name': 'fruit', 'parent': ''},
+        {'name': 'vegetable', 'parent': ''},
+        {'name': 'apple', 'parent': 'fruit'},
+        {'name': 'carrot', 'parent': 'vegetable'},
+        {'name': 'red-apple', 'parent': 'apple'},
+        {'name': 'green-apple', 'parent': 'apple'},
+        {'name': 'big-green-apple', 'parent': 'green-apple'}
+    ];
+    var newData = [
+        {'name': 'red-apple', 'parent': 'apple'},
+        {'name': 'yellow-apple', 'parent': 'apple'},
+        {'name': 'green-apple', 'parent': 'apple'}
+    ];
+    var newNode = {'name': 'small-yellow-apple', 'parent': 'yellow-apple'};
+    
+    var expectedValues = ['red-apple', 'yellow-apple', 'green-apple'];
+    var childrenNames;
+    var allNames;
+    
+    var tree = monkey.createTree(simpleDataWithParent, 'name', 'parent');
+    
+    tree.updateTree(newData);
+    
+    childrenNames = tree.children('apple', true).map(function(node) {
+        return node['name'];
+    });
+    assertEquals(['red-apple', 'yellow-apple', 'green-apple'], childrenNames);
+    
+    childrenNames = tree.children('green-apple', true).map(function(node) {
+        return node['name'];
+    });
+    assertEquals(['big-green-apple'], childrenNames);
+    
+    allNames = tree.toList().map(function(node) {
+        return node['name'];
+    });
+    assertEquals(['fruit', 'apple', 'red-apple', 'yellow-apple', 'green-apple', 'big-green-apple',
+                  'vegetable', 'carrot'], allNames);
+    
+    tree.insertNode(newNode);
+    allNames = tree.toList().map(function(node) {
+        return node['name'];
+    });
+    assertEquals(['fruit', 'apple', 'red-apple', 'yellow-apple', 'small-yellow-apple', 'green-apple',
+                  'big-green-apple', 'vegetable', 'carrot'], allNames)
 };
 
 IterationTest.prototype.testNext = function() {

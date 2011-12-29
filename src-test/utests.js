@@ -12,7 +12,7 @@ TreeTraversingTest = TestCase("TreeTraversingTest");
 // Functions tested: insertNode(), removeNode(), updateTree()
 ModificationTest = TestCase("ModificationTest");
 
-// Functions tested: next(), forEach(), map(), forEach(), toList(), isNodeFiltered(), filter(), sort()
+// Functions tested: next(), iterate(), forEach(), map(), forEach(), toList(), isNodeFiltered(), filter(), sort()
 IterationTest = TestCase("IterationTest");
 
 // Functions tested: countLevel(), countSubtree()
@@ -44,6 +44,7 @@ CreationTest.prototype.testEmptyCreation = function() {
     assertEquals('function', typeof tree.children);
     assertEquals('function', typeof tree.value);
     assertEquals('function', typeof tree.next);
+    assertEquals('function', typeof tree.iterate);
     assertEquals('function', typeof tree.forEach);
     assertEquals('function', typeof tree.map);
     assertEquals('function', typeof tree.filter);
@@ -710,6 +711,67 @@ IterationTest.prototype.testNext = function() {
     }, undefined);
 };
 
+IterationTest.prototype.testIterate = function() {
+    var addName = function(node) {
+        names.push(node['name']);
+    };
+    var data = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '0-2', 'name': 'pear'},
+        {'id': '1', 'name': 'vegetable'},
+        {'id': '1-0', 'name': 'carrot'},
+        {'id': '1-1', 'name': 'salad'},
+        {'id': '1-2', 'name': 'tomato'}
+    ];
+    var tree = monkey.createTree(data, 'id');
+    var names = [];
+    var startNode = tree.getNode('0-2');
+    var endNode = tree.getNode('1-2');
+    var badNode = {'___id': '0', 'name': '____fruit'};
+    var badId = '6';
+    
+    // test iteration for node arguments
+    tree.iterate(addName, startNode, endNode);
+    assertEquals(['pear', 'vegetable', 'carrot', 'salad'], names);
+    
+    // test iteration for id arguments
+    names = [];
+    tree.iterate(addName, '0-1', '1-1');
+    assertEquals(['apple', 'pear', 'vegetable', 'carrot'], names);
+    
+    // test iteration for empty end node argument
+    names = [];
+    tree.iterate(addName, '1');
+    assertEquals(['vegetable', 'carrot', 'salad', 'tomato'], names);
+    
+    // test iteration for empty first node argument
+    names = [];
+    tree.iterate(addName, undefined, '1');
+    assertEquals(['fruit', 'apple', 'pear'], names);
+    
+    // test iteration for empty both first and end node arguments
+    names = [];
+    tree.iterate(addName);
+    assertEquals(['fruit', 'apple', 'pear', 'vegetable',
+                  'carrot', 'salad', 'tomato'], names);
+    
+    // test if exception is throw for bad node
+    assertException(function() {
+        tree.iterate(addName, badNode, badNode);
+    }, undefined);
+    
+    // bad id
+    assertException(function() {
+        tree.iterate(addName, badId, badId);
+    }, undefined);
+    
+    // bad function
+    assertException(function() {
+        tree.iterate('not function');
+    }, undefined);
+};
+
 IterationTest.prototype.testForEach = function() {
     var data = [
         {'id': '0', 'name': 'fruit'},
@@ -746,6 +808,11 @@ IterationTest.prototype.testForEach = function() {
     });
     
     assertEquals('0', tree.getNode('0')['badId']);
+    
+    // test if exception is thrown for bad function
+    assertException(function() {
+        tree.forEach('not function');
+    }, undefined);
 };
 
 IterationTest.prototype.testMap = function() {
@@ -811,6 +878,11 @@ IterationTest.prototype.testMap = function() {
     tree.forEach(function(node) {
         node['badId'] = node['id'];
     });
+    
+    // test if exception is thrown for bad function
+    assertException(function() {
+        tree.map('not function');
+    }, undefined);
 };
 
 IterationTest.prototype.testFilter = function() {
@@ -875,6 +947,11 @@ IterationTest.prototype.testFilter = function() {
     assertEquals(filteredNodes, filteredTree.toList());
     assertTrue(filteredTree.isNodeFiltered('0'));
     assertTrue(filteredTree.isNodeFiltered('0-2'));
+    
+    // test if exception is thrown for bad function
+    assertException(function() {
+        tree.filter('not function');
+    }, undefined);
 };
 
 IterationTest.prototype.testSort = function() {
@@ -919,6 +996,11 @@ IterationTest.prototype.testSort = function() {
     });
     assertEquals(['fruit', 'apple', 'pear', 'vegetable',
                   'carrot', 'salad', 'tomato'], namesList);
+    
+    // test if exception is thrown for bad function
+    assertException(function() {
+        tree.sort('not function');
+    }, undefined);
 };
 
 IterationTest.prototype.testToList = function() {

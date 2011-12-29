@@ -9,10 +9,10 @@ BasicFunctionsTest = TestCase("BasicFunctionsTest");
 // Functions tested: parent(), children(), leftSibling(), rightSibling(), sibling(), isAncestor()
 TreeTraversingTest = TestCase("TreeTraversingTest");
 
-// Functions tested: insertNode(), removeNode(), isNodeFiltered()
+// Functions tested: insertNode(), removeNode(), updateTree()
 ModificationTest = TestCase("ModificationTest");
 
-// Functions tested: next(), forEach(), map(), forEach(), toList()
+// Functions tested: next(), forEach(), map(), forEach(), toList(), isNodeFiltered(), filter(), sort()
 IterationTest = TestCase("IterationTest");
 
 // Functions tested: countLevel(), countSubtree()
@@ -31,6 +31,7 @@ CreationTest.prototype.testEmptyCreation = function() {
     var tree = monkey.createTree(emptyData, 'id');
     
     assertEquals('function', typeof tree.insertNode);
+    assertEquals('function', typeof tree.updateTree);
     assertEquals('function', typeof tree.removeNode);
     assertEquals('function', typeof tree.getNode);
     assertEquals('function', typeof tree.parent);
@@ -44,8 +45,9 @@ CreationTest.prototype.testEmptyCreation = function() {
     assertEquals('function', typeof tree.value);
     assertEquals('function', typeof tree.next);
     assertEquals('function', typeof tree.forEach);
-    assertEquals('function', typeof tree.filter);
     assertEquals('function', typeof tree.map);
+    assertEquals('function', typeof tree.filter);
+    assertEquals('function', typeof tree.sort);
     assertEquals('function', typeof tree.countSubtree);
     assertEquals('function', typeof tree.countLevel);
     assertEquals('function', typeof tree.nodeId);
@@ -573,7 +575,7 @@ ModificationTest.prototype.testRemoveNode = function() {
     }, undefined);
 };
 
-ModificationTest.prototype.testUpdateSubtree = function() {
+ModificationTest.prototype.testUpdateTree = function() {
     var simpleDataWithParent = [
         {'name': 'fruit', 'parent': ''},
         {'name': 'vegetable', 'parent': ''},
@@ -839,6 +841,50 @@ IterationTest.prototype.testFilter = function() {
     assertEquals(filteredNodes, filteredTree.toList());
     assertTrue(filteredTree.isNodeFiltered('0'));
     assertTrue(filteredTree.isNodeFiltered('0-2'));
+};
+
+IterationTest.prototype.testSort = function() {
+    var sortMin = function(node1, node2) {
+        return node1['value'] - node2['value'];
+    };
+    var sortMax = function(node1, node2) {
+        return node2['value'] - node1['value'];
+    };
+    
+    var data = [
+        {'id': '0', 'name': 'fruit', 'value': 10},
+        {'id': '0-1', 'name': 'apple', 'value': 15},
+        {'id': '0-2', 'name': 'pear', 'value': 13},
+        {'id': '1', 'name': 'vegetable', 'value': 100},
+        {'id': '1-0', 'name': 'carrot', 'value': 2},
+        {'id': '1-1', 'name': 'salad', 'value': 7},
+        {'id': '1-2', 'name': 'tomato', 'value': 3}
+    ];
+    var tree = monkey.createTree(data, 'id');
+    var namesList;
+    var sortedTree;
+    
+    // check various types of sorting
+    sortedTree = tree.sort(sortMin);
+    namesList = sortedTree.toList().map(function(node) {
+        return node['name'];
+    });
+    assertEquals(['fruit', 'pear', 'apple', 'vegetable',
+                  'carrot', 'tomato', 'salad'], namesList);
+    
+    sortedTree = tree.sort(sortMax);
+    namesList = sortedTree.toList().map(function(node) {
+        return node['name'];
+    });
+    assertEquals(['vegetable', 'salad', 'tomato', 'carrot',
+                  'fruit', 'apple', 'pear'], namesList);
+    
+    // check if original tree is not changed
+    namesList = tree.toList().map(function(node) {
+        return node['name'];
+    });
+    assertEquals(['fruit', 'apple', 'pear', 'vegetable',
+                  'carrot', 'salad', 'tomato'], namesList);
 };
 
 IterationTest.prototype.testToList = function() {

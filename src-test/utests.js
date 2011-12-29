@@ -469,6 +469,7 @@ ModificationTest.prototype.testInsertNode = function() {
     var newNode3 = {'name': 'pear', 'parent': 'fruit'};
     var newNode4 = {'name': 'ear', 'parent': 'hu'};
     var badNode = {'another_id': '2-1', 'name': 'other-another'};
+    var badNode2 = {'name': 'animal', 'age': 10};
     
     // test if tree is returned
     assertSame(tree, tree.insertNode(newNode1));
@@ -514,6 +515,11 @@ ModificationTest.prototype.testInsertNode = function() {
     // test reaction for bad node
     assertException(function() {
         tree.insertNode(badNode);
+    }, undefined);
+    
+    // bad node for tree with parent column
+    assertException(function() {
+        par_tree.insertNode(badNode2);
     }, undefined);
 };
 
@@ -591,6 +597,20 @@ ModificationTest.prototype.testUpdateTree = function() {
         {'name': 'green-apple', 'parent': 'apple'}
     ];
     var newNode = {'name': 'small-yellow-apple', 'parent': 'yellow-apple'};
+    var badNewData = [
+        {'name': 'red-apple', 'parent': 'apple'},
+        {'no-name': 'unidentified', 'abc': 'xyz'},
+        {'name': 'yellow-apple', 'parent': 'apple'},
+        {'name': 'green-apple', 'parent': 'apple'},
+        {'no-name': 'unidentified2', 'abc': 'qwe'}
+    ];
+    var badNewData2 = [
+        {'name': 'red-apple', 'parent': 'apple'},
+        {'name': 'yellow-apple', 'parent': 'apple'},
+        {'name': 'dog', 'age': 10},
+        {'name': 'green-apple', 'parent': 'apple'},
+        {'name': 'cat', 'age': 6}
+    ];
     
     var expectedValues = ['red-apple', 'yellow-apple', 'green-apple'];
     var childrenNames;
@@ -600,28 +620,42 @@ ModificationTest.prototype.testUpdateTree = function() {
     
     tree.updateTree(newData);
     
+    // check if yellow apple was inserted inside
     childrenNames = tree.children('apple', true).map(function(node) {
         return node['name'];
     });
     assertEquals(['red-apple', 'yellow-apple', 'green-apple'], childrenNames);
     
+    // check if green apple has still has its child
     childrenNames = tree.children('green-apple', true).map(function(node) {
         return node['name'];
     });
     assertEquals(['big-green-apple'], childrenNames);
     
+    // check if sequence of nodes is correct
     allNames = tree.toList().map(function(node) {
         return node['name'];
     });
     assertEquals(['fruit', 'apple', 'red-apple', 'yellow-apple', 'green-apple', 'big-green-apple',
                   'vegetable', 'carrot'], allNames);
     
+    // check if new node in the correct place
     tree.insertNode(newNode);
     allNames = tree.toList().map(function(node) {
         return node['name'];
     });
     assertEquals(['fruit', 'apple', 'red-apple', 'yellow-apple', 'small-yellow-apple', 'green-apple',
-                  'big-green-apple', 'vegetable', 'carrot'], allNames)
+                  'big-green-apple', 'vegetable', 'carrot'], allNames);
+
+    // check if exception is thrown for bad nodes(no id)
+    assertException(function() {
+        tree.updateTree(badNewData);
+    }, undefined);
+    
+    // bad nodes(no parent id)
+    assertException(function() {
+        tree.updateTree(badNewData2);
+    }, undefined);
 };
 
 IterationTest.prototype.testNext = function() {

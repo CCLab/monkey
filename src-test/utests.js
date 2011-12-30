@@ -455,8 +455,8 @@ ModificationTest.prototype.testInsertNode = function() {
         {'id': '4', 'name': 'vegetable'}
     ];
     var simpleDataWithParent = [
-        {'name': 'fruit', 'parent': ''},
-        {'name': 'vegetable', 'parent': ''},
+        {'name': 'fruit', 'parent': null},
+        {'name': 'vegetable', 'parent': null},
         {'name': 'apple', 'parent': 'fruit'},
         {'name': 'carrot', 'parent': 'vegetable'},
     ];

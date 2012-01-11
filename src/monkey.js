@@ -297,6 +297,74 @@ Form of created tree:
                     return undefined;
             },
             
+            // TODO: test
+            // Returns list of ancestors of element which is a node or a node's id.
+            // Length of the list is limited to count number. If copy is set to false
+            // (default value), references are returned, otherwise copies of nodes.
+            // If count is not defined, all parents will be returned.
+            parents: function(elem, copy, count) {
+                var node;
+                var parentNode;
+                var parentsList = [];
+                var i;
+                
+                if (isIdType(elem)) {
+                    assertId(elem, 'parent');
+                    
+                    node = this.getNode(elem);
+                } else {
+                    assertNode(elem);
+                    
+                    node = elem;
+                }
+                
+                // maximal height of tree
+                if (count !== 0 && !!count) {
+                    count = 1000000;
+                }
+                
+                i = 0;
+                parentNode = node.parent;
+                while (i < count && parentNode !== root()) {
+                    if ( !!copy ) {
+                        parentsList.push( this.value(parentNode) );
+                    } else {
+                        parentsList.push( parentNode );
+                    }
+                    parentNode = node.parent;
+                    ++i;
+                }
+                
+                return parentsList;
+            },
+            
+            // test
+            // Returns top level parent node of element which is a node or a node's id.
+            // If copy is set to false(default value), reference is returned, otherwise
+            // returns copy of parent.
+            topParent:  function(elem, copy) {
+                var node;
+                var parentsList = [];
+                var topParentNode;
+                
+                if (isIdType(elem)) {
+                    assertId(elem, 'parent');
+                    
+                    node = this.getNode(elem);
+                } else {
+                    assertNode(elem);
+                    
+                    node = elem;
+                }
+                
+                parentsList = this.parents(elem);
+                if (parentList.length === 0) return undefined;
+                
+                topParentNode = parentsList.pop();
+                
+                return (copy) ? this.value(topParentNode) : topParentNode;
+            }
+            
             // Returns the root node of this tree.
             root: function() {
                 return rootNode;

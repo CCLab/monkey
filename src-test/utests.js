@@ -35,6 +35,8 @@ CreationTest.prototype.testEmptyCreation = function() {
     assertEquals('function', typeof tree.removeNode);
     assertEquals('function', typeof tree.getNode);
     assertEquals('function', typeof tree.parent);
+    assertEquals('function', typeof tree.topParent);
+    assertEquals('function', typeof tree.parents);
     assertEquals('function', typeof tree.root);
     assertEquals('function', typeof tree.isRoot);
     assertEquals('function', typeof tree.isNodeFiltered);
@@ -224,7 +226,6 @@ TreeTraversingTest.prototype.testParent = function() {
         {'id': '1-1', 'name': 'salad'}
     ];
     var badId = {};
-    var badNode = {};
     var parentNodeCopy;
     var tree = monkey.createTree(data, 'id');
     
@@ -256,10 +257,80 @@ TreeTraversingTest.prototype.testParent = function() {
     assertException(function() {
         tree.parent(badId);
     }, undefined);
+};
+
+TreeTraversingTest.prototype.testParents = function() {
+    var data = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '0-2', 'name': 'pear'},
+        {'id': '0-2-1', 'name': 'big-pear'},
+        {'id': '0-2-2', 'name': 'small-pear'},
+        {'id': '0-2-3', 'name': 'medium-pear'},
+        {'id': '1', 'name': 'vegetable'},
+        {'id': '1-0', 'name': 'carrot'},
+        {'id': '1-1', 'name': 'salad'}
+    ];
+    var badId = {};
+    var tree = monkey.createTree(data, 'id');
     
-    // check if parent throws exceptions with bad argument(bad node)
+    // test if the root has no parents
+    assertEquals([], tree.parents(tree.root()));
+    
+    // test if top level node has no parents
+    assertEquals([], tree.parents('0'));
+    
+    // test if parents gives the same result for id and for node as an argument
+    assertEquals(tree.parents('0'), tree.parents(tree.getNode('0')));
+    
+    // test for deeper nodes
+    assertEquals([tree.getNode('0')], tree.parents('0-1'));
+    assertEquals([tree.getNode('0'), tree.getNode('0-2')], tree.parents('0-2-2'));
+    
+   // test if copies are returned if second argument is true
+   assertEquals([], tree.parents('0', true));
+   assertEquals([tree.getNode('0', true)], tree.parents('0-1', true));
+    
+    // check if parents throws exceptions with bad argument(non-string id)
     assertException(function() {
-        tree.parent(badNode);
+        tree.parents(badId);
+    }, undefined);
+};
+
+TreeTraversingTest.prototype.testTopParent = function() {
+    var data = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '0-2', 'name': 'pear'},
+        {'id': '0-2-1', 'name': 'big-pear'},
+        {'id': '0-2-2', 'name': 'small-pear'},
+        {'id': '0-2-3', 'name': 'medium-pear'},
+        {'id': '1', 'name': 'vegetable'},
+        {'id': '1-0', 'name': 'carrot'},
+        {'id': '1-1', 'name': 'salad'}
+    ];
+    var badId = {};
+    var parentNodeCopy;
+    var tree = monkey.createTree(data, 'id');
+    
+    // check result for root and top level node
+    assertUndefined(tree.topParent(tree.root()));
+    assertUndefined(tree.topParent('0'));
+    
+    // check result for deeper nodes
+    assertEquals(tree.getNode('0'), tree.topParent('0-1'));
+    assertEquals(tree.getNode('1'), tree.topParent('1-0'));
+    assertEquals(tree.getNode('0'), tree.topParent('0-2-3'));
+    
+    // test if topParent gives the same result for id and for node as an argument
+    assertSame(tree.topParent(tree.getNode('0-2-3')), tree.topParent('0-2-3'));
+    
+    // test if copies are returned if second argument is true
+    assertEquals(tree.getNode('0', true), tree.topParent('0-2-3', true));
+
+    // check if topParent throws exceptions with bad argument(non-string id)
+    assertException(function() {
+        tree.parent(badId);
     }, undefined);
 };
 

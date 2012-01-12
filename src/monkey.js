@@ -297,7 +297,6 @@ Form of created tree:
                     return undefined;
             },
             
-            // TODO: test
             // Returns list of ancestors of element which is a node or a node's id.
             // Length of the list is limited to count number. If copy is set to false
             // (default value), references are returned, otherwise copies of nodes.
@@ -306,6 +305,7 @@ Form of created tree:
                 var node;
                 var parentNode;
                 var parentsList = [];
+                var reversedParentsList;
                 var i;
                 
                 if (isIdType(elem)) {
@@ -318,8 +318,10 @@ Form of created tree:
                     node = elem;
                 }
                 
+                if (this.isRoot(elem)) return [];
+                
                 // maximal height of tree
-                if (count !== 0 && !!count) {
+                if (count !== 0 || !!count) {
                     count = 1000000;
                 }
                 
@@ -331,11 +333,13 @@ Form of created tree:
                     } else {
                         parentsList.push( parentNode );
                     }
-                    parentNode = node.parent;
+                    parentNode = parentNode.parent;
                     ++i;
                 }
                 
-                return parentsList;
+                reversedParentsList = parentsList.reverse();
+                
+                return reversedParentsList;
             },
             
             // test
@@ -358,12 +362,12 @@ Form of created tree:
                 }
                 
                 parentsList = this.parents(elem);
-                if (parentList.length === 0) return undefined;
+                if (parentsList.length === 0) return undefined;
                 
-                topParentNode = parentsList.pop();
+                topParentNode = (parentsList.length > 0) ? parentsList[0] : undefined;
                 
                 return (copy) ? this.value(topParentNode) : topParentNode;
-            }
+            },
             
             // Returns the root node of this tree.
             root: function() {

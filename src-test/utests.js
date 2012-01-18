@@ -752,6 +752,9 @@ IterationTest.prototype.testNext = function() {
     // test if next gives the same result for node argument and for id argument
     assertSame(tree.next(tree.root()), tree.next(tree.nodeId(tree.root())));
     
+    // test if no node is passed
+    assertSame(tree.next(tree.root()), tree.next());
+    
     // test next if the given node has no children, but has right sibling
     assertSame(tree.next(tree.getNode('0-1')), tree.getNode('0-2'));
     

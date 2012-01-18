@@ -590,7 +590,8 @@ Form of created tree:
             },
             
             // Returns next node of node specified by elem(node or its id). Next node is chosen
-            // according to parent-left-right traversing direction. If it is the last node,
+            // according to parent-left-right traversing direction. Of no node is passed, then
+            // returns first node in the tree(next after root). If it is the last node,
             // returns undefined. 
             next: function(elem) {
                 var getNextNode = function(tree, elem) {
@@ -617,6 +618,7 @@ Form of created tree:
                 };
                 var nextNode;
                 
+                if (!elem) elem = root();
                 isIdType(elem) ? assertId(elem, 'next') : assertNode(this, this.nodeId(elem), false, 'next');
                 
                 nextNode = getNextNode(this, elem);

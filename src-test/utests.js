@@ -107,15 +107,15 @@ BasicFunctionsTest.prototype.testRoot = function() {
     
     // test root's parent and children
     assertUndefined(tree.root().parent);
-    assertArray(tree.root().children.get());
-    assertEquals(2, tree.root().children.length());
+    assertArray(tree.root().__children__.get());
+    assertEquals(2, tree.root().__children__.length());
     
     // test isRoot function for node argument
     assertTrue(tree.isRoot(tree.root()));
     assertFalse(tree.isRoot(tree.getNode('0')));
     
     // test isRoot function for node id argument
-    assertTrue(tree.isRoot(tree.root().id));
+    assertTrue(tree.isRoot(tree.root().__id__));
     assertFalse(tree.isRoot('0'));
 };
 

@@ -972,6 +972,7 @@ IterationTest.prototype.testFilter = function() {
     var tree;
     var filteredTree;
     var filteredNodes;
+    var allNodes;
     
     // give filter conditition that is satisfied by every node and check
     // if none nodes are filtered
@@ -983,7 +984,22 @@ IterationTest.prototype.testFilter = function() {
                         .filter(function(e) {
                             return e['val'] > 1;
                         });
+    
     assertEquals(filteredNodes, filteredTree.toList());
+    
+    // check if toList on filtered tree returns all nodes
+    // with acceptFiltered set to true
+    allNodes = tree.toList().map(function(e) {
+        return e['id'];
+    });
+    filteredNodes = tree.filter(function(e) {
+        return e['val'] > 4;
+    }).toList(true).map(function(e) {
+        return e['id'];
+    });
+    
+    assertEquals(allNodes, filteredNodes);
+    
     
     // check if leafs are filtered out properly
     filteredTree = filteredTree.filter(function(node) {

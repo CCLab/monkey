@@ -116,7 +116,7 @@ Form of created tree:
                     var lastPart = parseInt( innerId.slice(innerId.lastIndexOf('-') + 1) );
                     
                     if (getParentId(innerId) === '__root__') {
-                        newBaseId = innerId.parseInt() + delta + '';
+                        newBaseId = lastPart + delta + '';
                     } else {
                         newBaseId = getParentId(innerId) + '-' + (lastPart + delta + '');
                     }
@@ -210,7 +210,9 @@ Form of created tree:
                         // get original form of id
                         id = (!!parentColumn) ? firstChild[parentColumn] : getParentId(firstChild[idColumn]);
                         newNodes = groupedValues[id];
-                        oldNodes = (!id) ? this.children(this.root()) : this.children(id);
+                        id = ( !id && id !== 0 ) ? this.nodeId(this.root()) : id;
+                        //oldNodes = (!id) ? this.children(this.root()) : this.children(id);
+                        oldNodes = this.children(id);
                         newIds = newNodes.map(function (e) { return e[idColumn]; });
                         oldIds = oldNodes.map(function (e) { return e[idColumn]; });
                         translations = getTranslation(oldIds, newIds);
@@ -895,20 +897,6 @@ Form of created tree:
             if (!idMap[node.__id__]) {
                 idMap[node.__id__] = generateInnerId(parentId, idMap);
                 nodes.push(node);
-            } else {
-                for (i = 0; i < nodes.length; ++i) {
-                    if (nodes[i].__id__ === node.__id__) {
-                        if (!nodes[i].__filtered__) break;
-                        
-                        nodes[i].get().forEach(function(e) {
-                            node.__children__.add(e, parentId, idMap);
-                            e.__parent__ = node;
-                        });
-                        nodes[i].__parent__ = undefined;
-                        nodes[i] = node;
-                        break;
-                    }
-                }
             }
         };
         this.insert = function(node, idMap, index) {
@@ -920,7 +908,7 @@ Form of created tree:
         this.remove = function(id) {
             for (i = 0; i < nodes.length; ++i) {
                 if (nodes[i].__id__=== id) {
-                    nodes[i].__parent__ = undefined;
+                    delete nodes[ i ];
                     nodes.splice(i, 1);
                     break;
                 }

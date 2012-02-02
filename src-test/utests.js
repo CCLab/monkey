@@ -1011,7 +1011,8 @@ IterationTest.prototype.testFilter = function() {
                             return e['val'] > 2;
                         });
     assertEquals(filteredNodes, filteredTree.toList());
-    assertTrue(filteredTree.isNodeFiltered('0-2'));
+    assertFalse(filteredTree.isNodeFiltered('0-2'));
+    assertTrue(filteredTree.isNodeFiltered('1'));
     
     // check if non-leaf nodes are filtered out properly
     filteredTree = filteredTree.filter(function(node) {
@@ -1023,7 +1024,8 @@ IterationTest.prototype.testFilter = function() {
                             return e['val'] > 3;
                         });
     assertEquals(filteredNodes, filteredTree.toList());
-    assertTrue(filteredTree.isNodeFiltered('1'));
+    assertFalse(filteredTree.isNodeFiltered('1'));
+    assertTrue(filteredTree.isNodeFiltered('1-0'));
     
     // check if all nodes can be filtered out properly
     filteredTree = filteredTree.filter(function(node) {
@@ -1035,8 +1037,8 @@ IterationTest.prototype.testFilter = function() {
                             return e['val'] > 100;
                         });
     assertEquals(filteredNodes, filteredTree.toList());
-    assertTrue(filteredTree.isNodeFiltered('0'));
-    assertTrue(filteredTree.isNodeFiltered('0-2'));
+    assertFalse(filteredTree.isNodeFiltered('0'));
+    assertFalse(filteredTree.isNodeFiltered('0-2'));
     
     // test if exception is thrown for bad function
     assertException(function() {

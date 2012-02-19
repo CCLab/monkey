@@ -1066,6 +1066,7 @@ IterationTest.prototype.testSort = function() {
     var tree = monkey.createTree(data, 'id');
     var namesList;
     var sortedTree;
+    var sortedFilteredTree;
     
     // check various types of sorting
     sortedTree = tree.sort(sortMin);
@@ -1082,12 +1083,23 @@ IterationTest.prototype.testSort = function() {
     assertEquals(['vegetable', 'salad', 'tomato', 'carrot',
                   'fruit', 'apple', 'pear'], namesList);
     
+    // check sorting filtered tree
+    sortedFilteredTree = tree.filter(function(node) {
+        return node['value'] > 9;
+    }).sort(sortMin);
+    namesList = sortedFilteredTree.toList().map(function(node) {
+        return node['name'];
+    });
+    assertEquals(['fruit', 'pear', 'apple', 'vegetable'], namesList);
+    
     // check if original tree is not changed
     namesList = tree.toList().map(function(node) {
         return node['name'];
     });
     assertEquals(['fruit', 'apple', 'pear', 'vegetable',
                   'carrot', 'salad', 'tomato'], namesList);
+    
+    
     
     // test if exception is thrown for bad function
     assertException(function() {

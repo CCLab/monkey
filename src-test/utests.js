@@ -12,7 +12,7 @@ TreeTraversingTest = TestCase("TreeTraversingTest");
 // Functions tested: insertNode(), removeNode(), updateTree()
 ModificationTest = TestCase("ModificationTest");
 
-// Functions tested: next(), iterate(), forEach(), map(), forEach(), toList(), isNodeFiltered(), filter(), sort()
+// Functions tested: next(), iterate(), forEach(), map(), forEach(), toList(), isNodeFiltered(), filter(), sort(), inSubtreeDo()
 IterationTest = TestCase("IterationTest");
 
 // Functions tested: countLevel(), countSubtree()
@@ -51,6 +51,7 @@ CreationTest.prototype.testEmptyCreation = function() {
     assertEquals('function', typeof tree.map);
     assertEquals('function', typeof tree.filter);
     assertEquals('function', typeof tree.sort);
+    assertEquals('function', typeof tree.inSubtreeDo);
     assertEquals('function', typeof tree.countSubtree);
     assertEquals('function', typeof tree.countLevel);
     assertEquals('function', typeof tree.nodeId);
@@ -1104,6 +1105,55 @@ IterationTest.prototype.testSort = function() {
     // test if exception is thrown for bad function
     assertException(function() {
         tree.sort('not function');
+    }, undefined);
+};
+
+IterationTest.prototype.testInSubtreeDo = function() {
+    var fun = function(node) {
+        nodesValues.push(node['value']);
+    };
+    var fun2 = function(node) {
+        nodesValues2.push(node['value']);
+    };
+    var data = [
+        {'id': '0', 'name': 'fruit', 'value': 10},
+        {'id': '0-1', 'name': 'apple', 'value': 15},
+        {'id': '0-2', 'name': 'pear', 'value': 13},
+        {'id': '1', 'name': 'vegetable', 'value': 100},
+        {'id': '1-0', 'name': 'carrot', 'value': 2},
+        {'id': '1-1', 'name': 'salad', 'value': 7},
+        {'id': '1-2', 'name': 'tomato', 'value': 3}
+    ];
+    var tree = monkey.createTree(data, 'id');
+    var node = tree.getNode('0');
+    var nodesValues = [];
+    var nodesValues2 = [];
+    
+    // check results for various ids
+    tree.inSubtreeDo('0', fun);
+    assertEquals([10, 15, 13], nodesValues);
+    nodesValues = [];
+    tree.inSubtreeDo('0-1', fun);
+    assertEquals([15], nodesValues);
+    nodesValues = [];
+
+    tree.inSubtreeDo('0-2', fun);
+    assertEquals([13], nodesValues);
+    nodesValues = [];
+
+    // check if result is the same when id is passed and node is passed
+    tree.inSubtreeDo('0', fun);
+    tree.inSubtreeDo(node, fun2);
+    assertEquals(nodesValues, nodesValues2);
+
+    // test if exception is thrown for bad node
+    assertException(function() {
+        tree.inSubtreeDo(undefined, fun);
+    }, undefined);
+
+    // test if exception is thrown for bad function
+    assertException(function() {
+        tree.inSubtreeDo('0', undefined);
     }, undefined);
 };
 

@@ -5,6 +5,88 @@ Testing monkey.
 */
 
 (function() {
+        var sortMin = function(node1, node2) {
+        return node1['value'] - node2['value'];
+    };
+    var sortMax = function(node1, node2) {
+        return node2['value'] - node1['value'];
+    };
+    
+    var data = [
+        {'id': '0', 'name': 'fruit', 'value': 10},
+        {'id': '0-1', 'name': 'apple', 'value': 15},
+        {'id': '0-2', 'name': 'pear', 'value': 13},
+        {'id': '1', 'name': 'vegetable', 'value': 100},
+        {'id': '1-0', 'name': 'carrot', 'value': 2},
+        {'id': '1-1', 'name': 'salad', 'value': 7},
+        {'id': '1-2', 'name': 'tomato', 'value': 3}
+    ];
+    var tree = monkey.createTree(data, 'id');
+    var namesList;
+    var sortedTree;
+    var sortedFilteredTree;
+    
+    // check various types of sorting
+    sortedTree = tree.sort(sortMin);
+    namesList = sortedTree.toList().map(function(node) {
+        return node['name'];
+    });
+    // assertEquals(['fruit', 'pear', 'apple', 'vegetable',
+                  // 'carrot', 'tomato', 'salad'], namesList);
+    
+    sortedTree = tree.sort(sortMax);
+    namesList = sortedTree.toList().map(function(node) {
+        return node['name'];
+    });
+    // assertEquals(['vegetable', 'salad', 'tomato', 'carrot',
+                  // 'fruit', 'apple', 'pear'], namesList);
+    
+    // check if original tree is not changed
+    namesList = tree.toList().map(function(node) {
+        return node['name'];
+    });
+    
+    sortedFilteredTree = tree.filter(function(node) {
+        return node['value'] > 9;
+    }).sort(sortMin);
+    namesList = tree.toList().map(function(node) {
+        return node['name'];
+    });
+    
+    
+    var data = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '0-2', 'name': 'pear'},
+        {'id': '0-2-1', 'name': 'big-pear'},
+        {'id': '0-2-2', 'name': 'small-pear'},
+        {'id': '0-2-3', 'name': 'medium-pear'},
+        {'id': '1', 'name': 'vegetable'},
+        {'id': '1-0', 'name': 'carrot'},
+        {'id': '1-1', 'name': 'salad'}
+    ];
+    var badId = {};
+    var tree = monkey.createTree(data, 'id');
+    
+    // test if the root has no parents
+    var x1 = tree.parents(tree.root()); // []
+    
+    // test if top level node has no parents
+    var x2 = tree.parents('0'); // []
+    
+    // test if parents gives the same result for id and for node as an argument
+    var x3 = tree.parents(tree.getNode('0')); // []
+    
+    // test for deeper nodes
+    var x4 = tree.parents('0-1'); // tree.getNode('0')
+    var x5 = tree.parents('0-2-2'); // [tree.getNode('0'), tree.getNode('0-2')]
+    
+   // test if copies are returned if second argument is true
+   var x6 = tree.parents('0', true); // []
+   var x7 = tree.parents('0-1', true); // [tree.getNode('0', true)]
+   
+   var x8 = tree.topParent('0-2-3', true);
+    
     var data = [
         {'id': '0', 'name': 'fruit', 'val': 4},
         {'id': '0-1', 'name': 'apple', 'val': 5},
@@ -27,7 +109,6 @@ Testing monkey.
     var fitree = ftree.filter(function(node) {
         return node['val'] > 10;
     });
-    debugger;
     
     var tree;
     var filteredTree;

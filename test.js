@@ -11,6 +11,122 @@ Testing monkey.
     var sortMax = function(node1, node2) {
         return node2['value'] - node1['value'];
     };
+
+
+    var data = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '0-2', 'name': 'pear'},
+        {'id': '1', 'name': 'vegetable'},
+        {'id': '1-0', 'name': 'carrot'},
+        {'id': '1-1', 'name': 'salad'},
+        {'id': '1-2', 'name': 'tomato'}
+    ];
+    var tree = monkey.createTree(data, 'id');
+    var leftSiblingNodeCopy, rightSiblingNodeCopy, siblingNodeCopy;
+    var badId = {};
+    var badNode = {};
+    
+    //  root's left and right siblings
+    var x = tree.leftSibling(tree.root());
+    x = (tree.rightSibling(tree.root())); // undefined
+    
+    // check siblings of root by their number
+    x = tree.sibling(tree.root(), 0); // tree.root()
+    x = (tree.sibling(tree.root(), 1)); // undefined
+    
+    // check first level node's siblings
+    x = (tree.leftSibling(tree.getNode('0'))); // undefined
+    x = tree.getNode('0') ===  tree.leftSibling('1');
+    
+    x = (tree.getNode('1') === tree.rightSibling('0'));
+    x = (tree.rightSibling('1')); // undefined
+    
+    // check if sibling is the same for any node on the specified level
+    x = (tree.getNode('0') === tree.sibling(tree.getNode('0'), 0));
+    x = (tree.getNode('0') === tree.sibling(tree.getNode('1'), 0));
+    
+    // check if sibling functions gives the same result for node argument and id argument
+    x = (tree.leftSibling(tree.getNode('1')) === tree.leftSibling('1'));
+    x = (tree.rightSibling(tree.getNode('0')) === tree.rightSibling('0'));
+    x = (tree.sibling(tree.getNode('0'), 1) === tree.sibling('0', 1));
+    
+    // check if all sibling functions give the same results
+    x = (tree.leftSibling('1-2') === tree.rightSibling('1-0'));
+    x = (tree.sibling('1-2', 0) === tree.leftSibling('1-1'));
+    
+    // check if all sibling functions return copies of nodes when last argument is set to true
+    leftSiblingNodeCopy = tree.leftSibling('1-2', true);
+    rightSiblingNodeCopy = tree.rightSibling('1-0', true);
+    siblingNodeCopy = tree.sibling('1-1', 1, true);
+    
+    x = leftSiblingNodeCopy;
+    var y = rightSiblingNodeCopy;
+    var z = siblingNodeCopy;
+    // x == y == z, but not same
+    
+    // check if all functions return undefined for nonexisting node
+    x = (tree.leftSibling('1-5')); // undefined
+    x = (tree.rightSibling('1-5')); // undefined
+    x = (tree.sibling('1-5', 6)); // undefined
+
+
+
+    var simpleData = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '1', 'name': 'vegetable'}
+    ];
+    var tree = monkey.createTree(simpleData, 'id');
+    var badId = {};
+    
+    // check result for various level nodes
+    console.log(tree.nodeId(tree.getNode('0'))); // 0
+    console.log(tree.nodeId(tree.getNode('1'))); // 1
+    console.log(tree.nodeId(tree.getNode('0-1'))); // 0-1
+
+    var simpleDataWithParent = [ 
+        {'name': 'fruit', 'parent': ''},
+        {'name': 'vegetable', 'parent': ''},
+        {'name': 'apple', 'parent': 'fruit'},
+        {'name': 'carrot', 'parent': 'vegetable'},
+        {'name': 'red-apple', 'parent': 'apple'},
+        {'name': 'green-apple', 'parent': 'apple'},
+        {'name': 'big-green-apple', 'parent': 'green-apple'}
+    ];
+    var newData = [
+        {'name': 'red-apple', 'parent': 'apple'},
+        {'name': 'yellow-apple', 'parent': 'apple'},
+        {'name': 'green-apple', 'parent': 'apple'}
+    ];
+    var newNode = {'name': 'small-yellow-apple', 'parent': 'yellow-apple'};
+    var badNewData = [
+        {'name': 'red-apple', 'parent': 'apple'},
+        {'no-name': 'unidentified', 'abc': 'xyz'},
+        {'name': 'yellow-apple', 'parent': 'apple'},
+        {'name': 'green-apple', 'parent': 'apple'},
+        {'no-name': 'unidentified2', 'abc': 'qwe'}
+    ];
+    var badNewData2 = [
+        {'name': 'red-apple', 'parent': 'apple'},
+        {'name': 'yellow-apple', 'parent': 'apple'},
+        {'name': 'dog', 'age': 10},
+        {'name': 'green-apple', 'parent': 'apple'},
+        {'name': 'cat', 'age': 6}
+    ];
+    
+    var expectedValues = ['red-apple', 'yellow-apple', 'green-apple'];
+    var childrenNames;
+    var allNames;
+    
+    var tree = monkey.createTree(simpleDataWithParent, 'name', 'parent');
+    
+    tree.updateTree(newData);
+    
+    // check if yellow apple was inserted inside
+    childrenNames = tree.children('apple', true).map(function(node) {
+        return node['name'];
+    });
     
     var data = [
         {'id': '0', 'name': 'fruit', 'value': 10},

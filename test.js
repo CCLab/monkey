@@ -17,6 +17,27 @@ Testing monkey.
         {'id': '0', 'name': 'fruit'},
         {'id': '0-1', 'name': 'apple'},
         {'id': '0-2', 'name': 'pear'},
+        {'id': '1', 'name': 'vegetable', 'add': {'x': 1, 'y': 2}},
+        {'id': '1-0', 'name': 'carrot'},
+        {'id': '1-1', 'name': 'salad'},
+        {'id': '1-2', 'name': 'tomato'}
+    ];
+
+    var tree = monkey.createTree(data, 'id');
+    var updatedNode;
+    var node;
+
+    // check changing value
+    tree.updateNode('0', {'v': 10});
+    updatedNode = tree.getNode('0', true);
+    var n1 = {'id': '0', 'name': 'fruit', 'v': 10}
+    var n2 = updatedNode;
+
+
+    var data = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '0-2', 'name': 'pear'},
         {'id': '1', 'name': 'vegetable'},
         {'id': '1-0', 'name': 'carrot'},
         {'id': '1-1', 'name': 'salad'},

@@ -9,7 +9,7 @@ BasicFunctionsTest = TestCase("BasicFunctionsTest");
 // Functions tested: parent(), children(), leftSibling(), rightSibling(), sibling(), isAncestor()
 TreeTraversingTest = TestCase("TreeTraversingTest");
 
-// Functions tested: insertNode(), removeNode(), updateTree()
+// Functions tested: insertNode(), removeNode(), updateTree(), updateNode()
 ModificationTest = TestCase("ModificationTest");
 
 // Functions tested: next(), iterate(), forEach(), map(), forEach(), toList(), isNodeFiltered(), filter(), sort(), inSubtreeDo()
@@ -31,6 +31,7 @@ CreationTest.prototype.testEmptyCreation = function() {
     var tree = monkey.createTree(emptyData, 'id');
     
     assertEquals('function', typeof tree.insertNode);
+    assertEquals('function', typeof tree.updateNode);
     assertEquals('function', typeof tree.updateTree);
     assertEquals('function', typeof tree.removeNode);
     assertEquals('function', typeof tree.getNode);
@@ -728,6 +729,65 @@ ModificationTest.prototype.testUpdateTree = function() {
     // bad nodes(no parent id)
     assertException(function() {
         tree.updateTree(badNewData2);
+    }, undefined);
+};
+
+ModificationTest.prototype.testUpdateTree = function() {
+    var data = [
+        {'id': '0', 'name': 'fruit'},
+        {'id': '0-1', 'name': 'apple'},
+        {'id': '0-2', 'name': 'pear'},
+        {'id': '1', 'name': 'vegetable', 'add': {'x': 1, 'y': 2}},
+        {'id': '1-0', 'name': 'carrot'},
+        {'id': '1-1', 'name': 'salad'},
+        {'id': '1-2', 'name': 'tomato'}
+    ];
+
+    var tree = monkey.createTree(data, 'id');
+    var updatedNode;
+    var node;
+
+    // check changing value
+    tree.updateNode('0', {'v': 10});
+    updatedNode = tree.getNode('0', true);
+    assertEquals({'id': '0', 'name': 'fruit', 'v': 10}, updatedNode);
+
+    // check removing value
+    tree.updateNode('0', {'v': undefined});
+    updatedNode = tree.getNode('0', true);
+    assertEquals({'id': '0', 'name': 'fruit'}, updatedNode);
+
+    // check updating value
+    tree.updateNode('0', {'name': 'FRUIT'});
+    updatedNode = tree.getNode('0', true);
+    assertEquals({'id': '0', 'name': 'FRUIT'}, updatedNode);
+
+    // check updating value in not top level node
+    tree.updateNode('0-1', {'name': 'APPLE'});
+    updatedNode = tree.getNode('0-1', true);
+    assertEquals({'id': '0-1', 'name': 'APPLE'}, updatedNode);
+
+    // check updating value which is an object
+    tree.updateNode('1', {'add': {'x': undefined, 'z': 4}});
+    updatedNode = tree.getNode('1', true);
+    assertEquals({'id': '1', 'name': 'vegetable', 'add': {'y':2, 'z': 4}}, updatedNode);
+
+    // check if updating works also for nodes
+    node = tree.getNode('0-2');
+    tree.updateNode(node, {'name': 'PEAR'});
+    updatedNode = tree.getNode('0-2', true);
+    assertEquals({'id': '0-2', 'name': 'PEAR'}, updatedNode);
+
+    // check if updating will not change id
+    tree.updateNode('0', {'id': '2'});
+    node = tree.getNode('2', true);
+    assertUndefined(node);
+    node = tree.getNode('0', true);
+    assertEquals({'id': '0', 'name': 'FRUIT'}, node);
+
+    // check if passing bad update object will throw exception
+    assertException(function() {
+        tree.updateNode('0', [12, 32]);
     }, undefined);
 };
 

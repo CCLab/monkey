@@ -643,6 +643,10 @@ ModificationTest.prototype.testRemoveNode = function() {
     tree.removeNode(tree.root());
     assertNotUndefined(tree.root());
     assertEquals(['0', '1'], getIdsInList(tree.children(tree.root())));
+
+    // test if removing node also removes all its children
+    tree.removeNode('0');
+    assertEquals(['1', '1-0', '1-1'], tree.toList().map(function(e) { return e['id']; }));
     
     // test if exception is thrown for bad argument: bad id
     assertException(function() {
